@@ -1,0 +1,56 @@
+name: Rebase main from upstream
+
+on:
+  schedule:
+    # Every Sunday at 00:00 UTC.
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rebase-main
+  cancel-in-progress: false
+
+jobs:
+  rebase:
+    name: Rebase main on get-bb/bb
+    # Keep this fork-only automation from pushing to the canonical repository
+    # if the workflow is ever copied there.
+    if: github.repository != 'get-bb/bb'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Rebase main on upstream
+        env:
+          UPSTREAM_REPOSITORY: get-bb/bb
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git remote add upstream "https://github.com/${UPSTREAM_REPOSITORY}.git"
+          git fetch --prune upstream main
+          git fetch --prune origin main
+          git checkout -B main origin/main
+
+          origin_main="$(git rev-parse origin/main)"
+          git rebase upstream/main
+
+          if [[ "$(git rev-parse HEAD)" == "$origin_main" ]]; then
+            echo "main is already up to date with upstream."
+            exit 0
+          fi
+
+          # Do not overwrite commits added to origin/main after the fetch.
+          git push \
+            --force-with-lease="refs/heads/main:${origin_main}" \
+            origin HEAD:refs/heads/main
