@@ -25,6 +25,7 @@ interface ThreadEnvironmentSummaryProps {
   environmentHost?: MachineLabelHost;
   environmentMachineProvider?: MachineProviderPresentation | null;
   environmentCheckout?: WorkspaceCheckoutDisplay;
+  environmentPath?: string;
   onCreateNewThreadInEnvironment?: () => void;
 }
 
@@ -37,6 +38,7 @@ export const ThreadEnvironmentSummary = memo(function ThreadEnvironmentSummary({
   environmentHost,
   environmentMachineProvider,
   environmentCheckout,
+  environmentPath,
   onCreateNewThreadInEnvironment,
 }: ThreadEnvironmentSummaryProps) {
   if (
@@ -50,6 +52,7 @@ export const ThreadEnvironmentSummary = memo(function ThreadEnvironmentSummary({
   }
 
   const checkoutCopyValue = environmentCheckout?.copyValue ?? null;
+
   return (
     <div className="flex min-w-0 max-w-full items-center gap-2 pr-1.5">
       {projectName ? (
@@ -59,6 +62,19 @@ export const ThreadEnvironmentSummary = memo(function ThreadEnvironmentSummary({
           compactValue={projectName}
           leading={<Icon name="Folder" className="size-4 shrink-0" />}
           className="h-6 min-w-0 max-w-[10rem] shrink"
+          tooltip={
+            environmentPath ? `Copy directory: ${environmentPath}` : undefined
+          }
+          onClick={
+            environmentPath
+              ? () => {
+                  void copyToClipboardWithToast(environmentPath, {
+                    successMessage: "Directory copied",
+                    errorMessage: "Failed to copy directory",
+                  });
+                }
+              : undefined
+          }
         />
       ) : null}
       {environmentHost ? (

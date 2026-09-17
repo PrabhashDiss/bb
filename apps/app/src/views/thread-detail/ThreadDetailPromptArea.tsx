@@ -165,6 +165,7 @@ interface ThreadDetailPromptAreaProps {
   contextWindowUsage?: ThreadTimelineResponse["contextWindowUsage"];
   environmentCheckout?: WorkspaceCheckoutDisplay;
   environmentCompactLabel?: string;
+  environmentPath?: string;
   environmentGoneStatus: "destroyed" | null;
   environmentHostId?: string;
   environmentHost?: MachineLabelHost;
@@ -360,6 +361,7 @@ export function ThreadDetailPromptArea({
   contextWindowUsage,
   environmentCheckout,
   environmentCompactLabel,
+  environmentPath,
   environmentGoneStatus,
   environmentHostId,
   environmentHost,
@@ -1540,6 +1542,7 @@ export function ThreadDetailPromptArea({
           environmentProviderName={environmentProviderName}
           environmentMachineProvider={environmentMachineProvider}
           environmentCheckout={environmentCheckout}
+          environmentPath={environmentPath}
           onCreateNewThreadInEnvironment={onCreateNewThreadInEnvironment}
         />
       ) : null,
@@ -1547,6 +1550,7 @@ export function ThreadDetailPromptArea({
       environmentCheckout,
       environmentCompactLabel,
       environmentHost,
+      environmentPath,
       environmentIcon,
       environmentLabel,
       environmentMachineProvider,

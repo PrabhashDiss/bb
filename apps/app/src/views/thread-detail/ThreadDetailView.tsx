@@ -2520,6 +2520,7 @@ function ThreadDetailViewInternal(props: ThreadRoutePathArgs) {
       contextWindowUsage={contextWindowUsage}
       environmentCheckout={threadCheckoutDisplay}
       environmentCompactLabel={composerEnvironmentChrome?.environmentCompactLabel}
+      environmentPath={environment?.path ?? undefined}
       environmentHost={composerEnvironmentChrome?.environmentHost}
       environmentIcon={composerEnvironmentChrome?.environmentIcon}
       environmentLabel={composerEnvironmentChrome?.environmentLabel}
