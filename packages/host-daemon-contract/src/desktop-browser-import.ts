@@ -8,6 +8,7 @@ export const DESKTOP_BROWSER_IMPORT_SOURCE_IDS = [
   "vivaldi",
   "opera",
   "arc",
+  "helium",
   "firefox",
   "safari",
 ] as const;
