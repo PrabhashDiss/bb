@@ -38,31 +38,41 @@ function macApplicationSupport(
 function chromiumSource(input: {
   id: DesktopBrowserImportSourceId;
   name: string;
-  keychainService: string;
-  keychainAccount: string;
-  macSegments: readonly string[];
+  keychainService?: string;
+  keychainAccount?: string;
+  macSegments?: readonly string[];
   linuxSegments?: readonly string[];
   linuxSecretApplication?: string;
-  macAppNames: readonly string[];
+  macAppNames?: readonly string[];
   processNames: readonly string[];
 }): BrowserImportSourceDefinition {
+  const { macSegments, linuxSegments } = input;
   return {
     id: input.id,
     name: input.name,
     engine: "chromium",
-    platforms: ["darwin", ...(input.linuxSegments ? ["linux" as const] : [])],
-    keychainService: input.keychainService,
-    keychainAccount: input.keychainAccount,
-    macAppNames: input.macAppNames,
+    platforms: [
+      ...(macSegments ? ["darwin" as const] : []),
+      ...(linuxSegments ? ["linux" as const] : []),
+    ],
     processNames: input.processNames,
+    ...(input.keychainService === undefined
+      ? {}
+      : { keychainService: input.keychainService }),
+    ...(input.keychainAccount === undefined
+      ? {}
+      : { keychainAccount: input.keychainAccount }),
+    ...(input.macAppNames === undefined
+      ? {}
+      : { macAppNames: input.macAppNames }),
     ...(input.linuxSecretApplication === undefined
       ? {}
       : { linuxSecretApplication: input.linuxSecretApplication }),
     userDataDirectory: (context) => {
-      if (context.platform === "darwin")
-        return macApplicationSupport(context, ...input.macSegments);
-      if (context.platform === "linux" && input.linuxSegments)
-        return join(context.home, ".config", ...input.linuxSegments);
+      if (context.platform === "darwin" && macSegments)
+        return macApplicationSupport(context, ...macSegments);
+      if (context.platform === "linux" && linuxSegments)
+        return join(context.home, ".config", ...linuxSegments);
       return undefined;
     },
   };
@@ -94,12 +104,14 @@ export const BROWSER_IMPORT_SOURCES: readonly BrowserImportSourceDefinition[] =
     }),
     chromiumSource({
       id: "helium",
-      processNames: ["Helium"],
+      processNames: ["Helium", "helium"],
       macAppNames: ["Helium.app"],
       name: "Helium",
       keychainService: "Helium Storage Key",
       keychainAccount: "Helium",
       macSegments: ["net.imput.helium"],
+      linuxSegments: ["net.imput.helium"],
+      linuxSecretApplication: "helium",
     }),
     chromiumSource({
       id: "edge",
