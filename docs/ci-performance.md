@@ -544,7 +544,8 @@ artifact transfer and extra runner startup must be charged to the result.
 ## Cache maintenance
 
 `CI Cache Maintenance` reports GitHub-visible storage by family and runs daily.
-It deletes only recognized pnpm store caches:
+This fork does not carry that workflow. Upstream, it deletes only recognized
+pnpm store caches:
 
 - On the default branch, preserve the current lockfile and the two newest
   entries per OS/architecture. Older entries must be at least three days old
@@ -582,8 +583,9 @@ from plugin sources, and cached test results can mask the missing links.
 ## Daily health report
 
 The `CI Health` workflow reports the previous 24 hours each day at 07:19 UTC,
-with a manual dispatch option. It needs only checkout, Node, and read access to
-Actions. `scripts/report-ci-health.mjs` also runs locally with `GITHUB_TOKEN` and
+with a manual dispatch option. This fork does not carry that workflow.
+Upstream, it needs only checkout, Node, and read access to Actions.
+`scripts/report-ci-health.mjs` also runs locally with `GITHUB_TOKEN` and
 `GITHUB_REPOSITORY` set. It writes `.ci-health/report.md`, `report.json`, and the
 normalized run/job evidence in `runs.json`; Actions retains these for 30 days.
 
