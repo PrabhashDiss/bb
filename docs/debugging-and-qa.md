@@ -572,7 +572,8 @@ To exercise the whole chain without OpenRouter, export
 pointing at a local OpenAI-compatible fake, plus any non-empty
 `OPENROUTER_API_KEY`.
 The production gateway gets the key from the repository's `OPENROUTER_API_KEY`
-Actions secret, which `deploy-ai-gateway.yml` uploads with each deploy. Set the
+Actions secret, which upstream's `deploy-ai-gateway.yml` uploads with each
+deploy. This fork does not carry that workflow. Set the
 staging key with `wrangler secret put OPENROUTER_API_KEY --env staging` from
 `apps/ai-gateway`. Use a dedicated OpenRouter key with account-wide zero data
 retention and a daily credit limit.
