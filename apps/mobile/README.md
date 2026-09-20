@@ -238,7 +238,7 @@ Android 16. Recheck and remove it when upgrading to a version with the fix.
 ### Android production setup
 
 The manual `Mobile Android (EAS)` workflow builds preview APKs or production
-AABs. It needs the existing `EXPO_TOKEN` and an Android signing key configured
+AABs. This fork does not carry that workflow. Upstream, it needs the existing `EXPO_TOKEN` and an Android signing key configured
 through `pnpm exec eas credentials -p android` in `apps/mobile`. Submission is
 opt-in and uploads a draft to the internal Play track; it does not release to
 the public. The first Play upload must be completed manually.
@@ -360,6 +360,7 @@ as the first argument drives a dev client through Metro instead.
   no Firebase, EAS, or Play credentials. The `mobile-e2e-android` artifact
   contains screenshots, JUnit results, Maestro output, logcat, and backend logs.
   Keyboard animation, push delivery, and bb connect are outside this basic job.
+  This fork does not carry this workflow.
 
 - Typecheck, lint, and unit tests run on Linux in the regular `CI` workflow
   (`pnpm exec turbo run build typecheck lint` in `Checks`, the `packages`
@@ -840,7 +841,8 @@ its full `-nightly.RUN.ATTEMPT` suffix. EAS continues to increment the integer
 Android build number independently. The APK's version name and build number
 are also used in the Settings → Mobile download metadata.
 
-For an immediate update, run **Mobile Android (EAS)**, profile `preview`,
+This fork does not carry the `mobile-android-eas.yml` workflow. Upstream, for
+an immediate update, run **Mobile Android (EAS)**, profile `preview`,
 **publish** on, or
 `gh workflow run mobile-android-eas.yml --ref main -f profile=preview -f publish=true -f submit=false`.
 Add `-f version=X.Y.Z-nightly.RUN.ATTEMPT` to assign a specific nightly version,

@@ -40,7 +40,7 @@ custom SQL file.
 On a merge to `main`, `deploy-web.yml` and `deploy-connect.yml` each run
 `db:migrate` before their deploy and share the `connect-db-deploy` concurrency
 group, so a migration lands before either worker ships. `deploy-ai-gateway.yml`
-does not migrate, so land a migration the gateway needs in an earlier merge
+(not carried by this fork) does not migrate, so land a migration the gateway needs in an earlier merge
 than the gateway change that reads it.
 
 Keep migrations additive for the workers that are still running: old workers
