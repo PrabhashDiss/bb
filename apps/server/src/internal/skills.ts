@@ -17,14 +17,14 @@ export function registerInternalSkillRoutes(app: Hono, deps: AppDeps): void {
     if (!TREE_HASH_PATTERN.test(requestedHash)) {
       throw new ApiError(404, "skill_tree_not_found", "Skill tree not found");
     }
-    const sourceRootPath = deps.skillTreeRegistry.resolve(requestedHash);
-    if (sourceRootPath === undefined) {
+    const location = deps.skillTreeRegistry.resolve(requestedHash);
+    if (location === undefined) {
       throw new ApiError(404, "skill_tree_not_found", "Skill tree not found");
     }
 
     let manifest;
     try {
-      manifest = readSkillTreeManifest(sourceRootPath);
+      manifest = readSkillTreeManifest(location);
     } catch {
       throw new ApiError(404, "skill_tree_not_found", "Skill tree not found");
     }
