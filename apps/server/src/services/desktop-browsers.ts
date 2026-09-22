@@ -243,7 +243,7 @@ export async function createDesktopBrowserTab(
       tabId: randomUUID(),
       url: input.url,
       presentation: input.presentation,
-      profile: { kind: "automation", id: randomUUID() },
+      profile: { kind: "automation", id: input.profileId ?? randomUUID() },
     },
   });
   try {
