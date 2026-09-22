@@ -13,6 +13,7 @@ import { REGISTRY_SKILL_PROVENANCE_FILE_NAME } from "./registry-skill-provenance
 const SKILL_FILE_NAME = "SKILL.md";
 const SKILL_NAME_PATTERN = /^(?!.*--)[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/u;
 const SKILL_FRONTMATTER_DELIMITER = "---";
+const MAX_SKILL_TREE_DEPTH = 24;
 
 const skillFrontmatterSchema = z
   .object({
@@ -58,6 +59,7 @@ export function discoverPluginSkillIds(
   for (const { pluginId, rootPath } of args.pluginSkillRoots) {
     const ids = idsByPlugin.get(pluginId) ?? new Set<string>();
     for (const source of readSkillsRoot({
+      followSymlinks: false,
       logger,
       skillTreeRegistry: args.skillTreeRegistry,
       skillsRootPath: rootPath,
@@ -113,15 +115,20 @@ interface SkillTreeManifest {
   treeHash: string;
 }
 
-export class SkillTreeRegistry {
-  readonly #rootsByHash = new Map<string, string>();
+export interface SkillTreeLocation {
+  followSymlinks: boolean;
+  sourceRootPath: string;
+}
 
-  register(treeHash: string, sourceRootPath: string): void {
-    this.#rootsByHash.set(treeHash, sourceRootPath);
+export class SkillTreeRegistry {
+  readonly #locationsByHash = new Map<string, SkillTreeLocation>();
+
+  register(treeHash: string, location: SkillTreeLocation): void {
+    this.#locationsByHash.set(treeHash, location);
   }
 
-  resolve(treeHash: string): string | undefined {
-    return this.#rootsByHash.get(treeHash);
+  resolve(treeHash: string): SkillTreeLocation | undefined {
+    return this.#locationsByHash.get(treeHash);
   }
 }
 
@@ -140,6 +147,7 @@ interface SkillTreeCandidateSource {
 }
 
 interface SkillRootScanArgs extends SkillTreeCandidateSource {
+  followSymlinks: boolean;
   logger: ServerLogger;
   skillTreeRegistry: SkillTreeRegistry;
   skillsRootPath: string;
@@ -148,6 +156,7 @@ interface SkillRootScanArgs extends SkillTreeCandidateSource {
 interface SkillCandidateArgs extends SkillTreeCandidateSource {
   candidatePath: string;
   directoryName: string;
+  followSymlinks: boolean;
   logger: ServerLogger;
   skillTreeRegistry: SkillTreeRegistry;
 }
@@ -214,10 +223,16 @@ function normalizeRelativePath(relativePath: string): string {
   return relativePath.split(path.sep).join("/");
 }
 
-function collectSkillTreeEntries(
-  rootPath: string,
-  currentPath = rootPath,
-): SkillTreeEntry[] {
+function collectSkillTreeEntries(args: {
+  currentPath: string;
+  depth: number;
+  followSymlinks: boolean;
+  rootPath: string;
+}): SkillTreeEntry[] {
+  const { currentPath, followSymlinks, rootPath } = args;
+  if (args.depth > MAX_SKILL_TREE_DEPTH) {
+    throw new Error(`Skill tree exceeds max depth ${MAX_SKILL_TREE_DEPTH}`);
+  }
   const entries: SkillTreeEntry[] = [];
   for (const entry of fs
     .readdirSync(currentPath, { withFileTypes: true })
@@ -229,12 +244,21 @@ function collectSkillTreeEntries(
       continue;
     }
     const entryPath = path.join(currentPath, entry.name);
-    const stat = fs.lstatSync(entryPath);
+    const stat = followSymlinks
+      ? fs.statSync(entryPath)
+      : fs.lstatSync(entryPath);
     if (stat.isSymbolicLink()) {
       throw new Error(`Skill tree contains a symlink: ${entryPath}`);
     }
     if (stat.isDirectory()) {
-      entries.push(...collectSkillTreeEntries(rootPath, entryPath));
+      entries.push(
+        ...collectSkillTreeEntries({
+          currentPath: entryPath,
+          depth: args.depth + 1,
+          followSymlinks,
+          rootPath,
+        }),
+      );
       continue;
     }
     if (!stat.isFile()) {
@@ -269,8 +293,15 @@ export function hashSkillTreeEntries(
   return hash.digest("hex");
 }
 
-export function readSkillTreeManifest(rootPath: string): SkillTreeManifest {
-  const entries = collectSkillTreeEntries(rootPath);
+export function readSkillTreeManifest(
+  location: SkillTreeLocation,
+): SkillTreeManifest {
+  const entries = collectSkillTreeEntries({
+    currentPath: location.sourceRootPath,
+    depth: 0,
+    followSymlinks: location.followSymlinks,
+    rootPath: location.sourceRootPath,
+  });
   return { entries, treeHash: hashSkillTreeEntries(entries) };
 }
 
@@ -290,12 +321,21 @@ function readSkillCandidate(
   const skillFilePath = toSkillFilePath(args.candidatePath);
   let skillFileStat;
   try {
-    skillFileStat = fs.lstatSync(skillFilePath);
+    skillFileStat = args.followSymlinks
+      ? fs.statSync(skillFilePath)
+      : fs.lstatSync(skillFilePath);
   } catch (error) {
     if (error instanceof Error && isFsErrorWithCode(error, "ENOENT")) {
       logInvalidSkill({
         ...args,
         reason: "Missing SKILL.md",
+      });
+      return null;
+    }
+    if (error instanceof Error && isFsErrorWithCode(error, "ELOOP")) {
+      logInvalidSkill({
+        ...args,
+        reason: "SKILL.md symlink could not be resolved",
       });
       return null;
     }
@@ -359,7 +399,10 @@ function readSkillCandidate(
 
   let manifest: SkillTreeManifest;
   try {
-    manifest = readSkillTreeManifest(args.candidatePath);
+    manifest = readSkillTreeManifest({
+      followSymlinks: args.followSymlinks,
+      sourceRootPath: args.candidatePath,
+    });
   } catch (error) {
     logInvalidSkill({
       ...args,
@@ -368,7 +411,10 @@ function readSkillCandidate(
     });
     return null;
   }
-  args.skillTreeRegistry.register(manifest.treeHash, args.candidatePath);
+  args.skillTreeRegistry.register(manifest.treeHash, {
+    followSymlinks: args.followSymlinks,
+    sourceRootPath: args.candidatePath,
+  });
   return {
     kind: "tree",
     sourceType: args.sourceType,
@@ -448,9 +494,21 @@ function readSkillsRoot(
 ): HostDaemonInjectedSkillSource[] {
   let rootStat;
   try {
-    rootStat = fs.lstatSync(args.skillsRootPath);
+    rootStat = args.followSymlinks
+      ? fs.statSync(args.skillsRootPath)
+      : fs.lstatSync(args.skillsRootPath);
   } catch (error) {
     if (error instanceof Error && isFsErrorWithCode(error, "ENOENT")) {
+      return [];
+    }
+    if (error instanceof Error && isFsErrorWithCode(error, "ELOOP")) {
+      args.logger.warn(
+        {
+          skillsRootPath: args.skillsRootPath,
+          sourceType: args.sourceType,
+        },
+        "Skipping unresolvable injected skills root symlink",
+      );
       return [];
     }
     throw error;
@@ -486,7 +544,7 @@ function readSkillsRoot(
 
   for (const entry of entries) {
     const candidatePath = path.join(args.skillsRootPath, entry.name);
-    if (entry.isSymbolicLink()) {
+    if (entry.isSymbolicLink() && !args.followSymlinks) {
       logInvalidSkill({
         ...args,
         candidatePath,
@@ -494,7 +552,20 @@ function readSkillsRoot(
       });
       continue;
     }
-    if (!entry.isDirectory()) {
+    let isDirectory = entry.isDirectory();
+    if (entry.isSymbolicLink()) {
+      try {
+        isDirectory = fs.statSync(candidatePath).isDirectory();
+      } catch {
+        logInvalidSkill({
+          ...args,
+          candidatePath,
+          reason: "Skill directory symlink could not be resolved",
+        });
+        continue;
+      }
+    }
+    if (!isDirectory) {
       logInvalidSkill({
         ...args,
         candidatePath,
@@ -505,6 +576,7 @@ function readSkillsRoot(
     const source = readSkillCandidate({
       candidatePath,
       directoryName: entry.name,
+      followSymlinks: args.followSymlinks,
       logger: args.logger,
       skillTreeRegistry: args.skillTreeRegistry,
       sourceType: args.sourceType,
@@ -524,6 +596,7 @@ export function resolveServerOwnedSkillCatalogEntries(
     args.builtinSkillsRootPath === null
       ? []
       : readSkillsRoot({
+          followSymlinks: false,
           logger: args.logger,
           skillTreeRegistry: args.skillTreeRegistry,
           skillsRootPath: args.builtinSkillsRootPath,
@@ -534,6 +607,7 @@ export function resolveServerOwnedSkillCatalogEntries(
     runtimeSource,
   }));
   const user = readSkillsRoot({
+    followSymlinks: true,
     logger: args.logger,
     skillTreeRegistry: args.skillTreeRegistry,
     skillsRootPath: resolveDataDirSkillsRootPath(args.dataDir),
@@ -618,6 +692,7 @@ export function resolveSkillCatalogEntries(
   );
 
   const dataDirSources = readSkillsRoot({
+    followSymlinks: true,
     logger,
     skillTreeRegistry,
     skillsRootPath: resolveDataDirSkillsRootPath(args.dataDir),
@@ -626,6 +701,7 @@ export function resolveSkillCatalogEntries(
   const inheritedSourceGroups = (args.additionalSkillsRootPaths ?? []).map(
     (skillsRootPath) =>
       readSkillsRoot({
+        followSymlinks: false,
         logger,
         skillTreeRegistry,
         skillsRootPath,
@@ -656,6 +732,7 @@ export function resolveSkillCatalogEntries(
     ({ pluginId, rootPath }) => ({
       pluginId,
       sources: readSkillsRoot({
+        followSymlinks: false,
         logger,
         skillTreeRegistry,
         skillsRootPath: rootPath,
