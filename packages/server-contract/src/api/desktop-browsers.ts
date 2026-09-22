@@ -26,6 +26,7 @@ export const desktopBrowserCreateRequestSchema = desktopBrowserScopeSchema
       .pipe(z.string().max(4096))
       .default("about:blank"),
     presentation: z.enum(["hidden", "reveal"]).default("hidden"),
+    profileId: id.optional(),
   })
   .strict();
 export const desktopBrowserAcquireRequestSchema = desktopBrowserScopeSchema
