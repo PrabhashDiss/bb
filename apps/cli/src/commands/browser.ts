@@ -144,17 +144,32 @@ export function registerBrowserCommands(
   scoped(
     browser
       .command("create")
-      .description("Create a tab with a separate automation profile"),
+      .description(
+        "Create a tab with a separate automation profile, or a named reusable one",
+      ),
   )
     .option("--url <url>", "Initial HTTP(S) URL; defaults to about:blank")
     .option("--reveal", "Show the new native tab")
+    .option(
+      "--profile <id>",
+      "Reuse the named automation profile seeded by `bb browser import-cookies --into automation:<id>`; defaults to a fresh isolated profile",
+    )
     .action(
       action(
-        async (options: ScopeOptions & { url?: string; reveal?: boolean }) => {
+        async (
+          options: ScopeOptions & {
+            url?: string;
+            reveal?: boolean;
+            profile?: string;
+          },
+        ) => {
           const result = await api().createTab({
             ...scope(options),
             ...(options.url === undefined ? {} : { url: options.url }),
             ...(options.reveal ? { presentation: "reveal" } : {}),
+            ...(options.profile === undefined
+              ? {}
+              : { profileId: options.profile }),
           });
           print(result, options, `Created tab ${result.tab.tabId}`);
         },
