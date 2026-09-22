@@ -190,8 +190,9 @@ function listBbPluginSkills(deps: AppDeps): SkillSummary[] {
       if (provenance.kind !== "plugin" || runtimeSource.kind !== "tree") {
         return null;
       }
-      const rootPath = deps.skillTreeRegistry.resolve(runtimeSource.treeHash);
-      if (rootPath === undefined) return null;
+      const location = deps.skillTreeRegistry.resolve(runtimeSource.treeHash);
+      if (location === undefined) return null;
+      const rootPath = location.sourceRootPath;
       const logicalPath = `${runtimeSource.name}/${runtimeSource.entryPath}`;
       return {
         id: skillId(`bb-plugin:${provenance.pluginId}`, logicalPath),
