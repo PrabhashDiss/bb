@@ -309,12 +309,31 @@ function isGhUnavailableError(error: unknown): error is Error {
 const GH_NO_CREDENTIALS = /no oauth token|not logged in/i;
 const GH_HOST = "github.com";
 
-function parseGithubRemote(url: string): string | null {
+function parseRemote(
+  url: string,
+): { host: string; repo: string; ssh: boolean } | null {
   const match = url
     .trim()
-    .match(/github\.com[:/]([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/);
+    .match(
+      /^(?:([a-z+]+):\/\/)?(?:[^@/\s]+@)?([^:/\s]+)(?::\d+)?[:/]([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/i,
+    );
   if (match === null) return null;
-  return `${match[1]}/${match[2]}`;
+  const scheme = match[1]?.toLowerCase();
+  return {
+    host: match[2].toLowerCase(),
+    repo: `${match[3]}/${match[4]}`,
+    ssh: scheme === undefined || scheme.includes("ssh"),
+  };
+}
+
+async function resolveSshHostname(alias: string): Promise<string | null> {
+  try {
+    const { stdout } = await run("ssh", ["-G", "--", alias], 5_000);
+    const line = stdout.split("\n").find((l) => l.startsWith("hostname "));
+    return line === undefined ? null : line.slice(9).trim().toLowerCase();
+  } catch {
+    return null;
+  }
 }
 
 function isRepoName(value: unknown): value is string {
@@ -623,6 +642,7 @@ export default async function plugin(bb: BbPluginApi) {
       return repoCache.repos;
     }
     const byRepo = new Map<string, RepoInfo>();
+    const sshHostnames = new Map<string, Promise<string | null>>();
     try {
       const projects = await bb.sdk.projects.list();
       for (const project of projects) {
@@ -634,8 +654,19 @@ export default async function plugin(bb: BbPluginApi) {
               ["-C", source.path, "remote", "get-url", "origin"],
               5_000,
             );
-            const repo = parseGithubRemote(stdout);
-            if (repo !== null && !byRepo.has(repo)) {
+            const remote = parseRemote(stdout);
+            if (remote === null) continue;
+            if (remote.host !== GH_HOST) {
+              if (!remote.ssh) continue;
+              let hostname = sshHostnames.get(remote.host);
+              if (hostname === undefined) {
+                hostname = resolveSshHostname(remote.host);
+                sshHostnames.set(remote.host, hostname);
+              }
+              if ((await hostname) !== GH_HOST) continue;
+            }
+            const repo = remote.repo;
+            if (!byRepo.has(repo)) {
               byRepo.set(repo, { repo, projectId: project.id });
             }
           } catch {}
