@@ -571,7 +571,7 @@ export default async function plugin(bb: BbPluginApi) {
 
   async function probeAuth(): Promise<void> {
     try {
-      await gh(["auth", "status", "--hostname", GH_HOST, "--active"], 10_000);
+      await gh(["auth", "status", "--hostname", GH_HOST], 10_000);
       ghState = "ready";
       ghAuthError = null;
       return;
