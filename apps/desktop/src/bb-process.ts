@@ -87,8 +87,65 @@ interface ResolveBbAppProcessRuntimeArgs {
 const APPIMAGE_BRIDGE_RELATIVE_PATH_ENV =
   "BB_DESKTOP_APPIMAGE_BRIDGE_RELATIVE_PATH";
 
+export function createAppImageChildProcessEnv(
+  env: NodeJS.ProcessEnv,
+): NodeJS.ProcessEnv {
+  const appDirPath = env.APPDIR?.trim().replace(/\/+$/u, "") ?? "";
+  if (appDirPath.length === 0 || (env.APPIMAGE?.trim() ?? "").length === 0) {
+    return env;
+  }
+
+  const separatorIndex = appDirPath.lastIndexOf("/");
+  const mountParentPath = appDirPath.slice(0, separatorIndex);
+  const isRuntimeMount = appDirPath
+    .slice(separatorIndex + 1)
+    .startsWith(".mount_");
+  const isAppImageRoot = (rootPath: string): boolean => {
+    if (rootPath === appDirPath) {
+      return true;
+    }
+    if (!isRuntimeMount || !rootPath.startsWith(`${mountParentPath}/`)) {
+      return false;
+    }
+    const mountName = rootPath.slice(mountParentPath.length + 1);
+    return mountName.startsWith(".mount_") && !mountName.includes("/");
+  };
+  const injectedSuffixesByName: Record<string, string[]> = {
+    GSETTINGS_SCHEMA_DIR: ["/usr/share/glib-2.0/schemas"],
+    LD_LIBRARY_PATH: ["/usr/lib"],
+    PATH: ["", "/usr/sbin"],
+    XDG_DATA_DIRS: ["/usr/share/"],
+  };
+
+  const childEnv = { ...env };
+  for (const [name, suffixes] of Object.entries(injectedSuffixesByName)) {
+    const value = childEnv[name];
+    if (value === undefined) {
+      continue;
+    }
+    const entries: string[] = [];
+    for (const entry of value.split(":")) {
+      const isInjected = suffixes.some(
+        (suffix) =>
+          entry.endsWith(suffix) &&
+          isAppImageRoot(entry.slice(0, entry.length - suffix.length)),
+      );
+      if (entry.length > 0 && !isInjected && !entries.includes(entry)) {
+        entries.push(entry);
+      }
+    }
+    if (entries.length === 0) {
+      delete childEnv[name];
+    } else {
+      childEnv[name] = entries.join(":");
+    }
+  }
+  return childEnv;
+}
+
 async function runAppImageBridgeSupervisor(
   bridgeRelativePathEnv: string,
+  createChildProcessEnv: (env: NodeJS.ProcessEnv) => NodeJS.ProcessEnv,
 ): Promise<void> {
   const { spawn: spawnChild } = process.getBuiltinModule("node:child_process");
   const { readdirSync, readFileSync } = process.getBuiltinModule("node:fs");
@@ -101,7 +158,7 @@ async function runAppImageBridgeSupervisor(
 
   const bridgePath = resolvePath(appDirPath, bridgeRelativePath);
   const bridgeProcess = spawnChild(process.execPath, [bridgePath], {
-    env: process.env,
+    env: createChildProcessEnv(process.env),
     stdio: "inherit",
   });
   if (bridgeProcess.pid === undefined) {
@@ -188,7 +245,7 @@ async function runAppImageBridgeSupervisor(
   }
 }
 
-const APPIMAGE_BRIDGE_BOOTSTRAP = `await (${runAppImageBridgeSupervisor.toString()})(${JSON.stringify(APPIMAGE_BRIDGE_RELATIVE_PATH_ENV)});`;
+const APPIMAGE_BRIDGE_BOOTSTRAP = `await (${runAppImageBridgeSupervisor.toString()})(${JSON.stringify(APPIMAGE_BRIDGE_RELATIVE_PATH_ENV)}, ${createAppImageChildProcessEnv.toString()});`;
 
 function createRuntimeLogBuffer(
   args: CreateRuntimeLogBufferArgs,
