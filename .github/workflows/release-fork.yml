@@ -1,0 +1,104 @@
+name: Release fork artifacts
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and release Linux artifacts
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+
+      - name: Set up workspace
+        uses: ./.github/actions/setup-workspace
+        with:
+          node-version: 22.19.0
+          pnpm-version: 9.15.0
+          cache-prefix: fork-release
+
+      - name: Select release tag
+        id: release
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "push" && "$GITHUB_REF" == refs/tags/* ]]; then
+            release_tag="$REF_NAME"
+          else
+            commit_timestamp="$(git show -s --format=%ct "$GITHUB_SHA")"
+            release_tag="$(date --utc --date="@$commit_timestamp" +%Y%m%d.%H%M%S).${GITHUB_RUN_NUMBER}"
+          fi
+          printf 'tag=%s\n' "$release_tag" >> "$GITHUB_OUTPUT"
+          printf 'Release tag: %s\n' "$release_tag"
+
+      - name: Build bb-app
+        run: pnpm exec turbo run build --filter=bb-app --output-logs=new-only
+
+      - name: Pack bb-app
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          (cd packages/bb-app && npm pack --pack-destination "$GITHUB_WORKSPACE/release")
+
+      - name: Build Linux AppImage
+        run: |
+          pnpm exec turbo run build --filter=@bb/desktop --filter=bb-app --output-logs=new-only
+          pnpm exec turbo run desktop:build:linux --filter=@bb/desktop --output-logs=new-only
+
+      - name: Collect release assets
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          appimages=(apps/desktop/release/*.AppImage)
+          if [[ "${#appimages[@]}" -ne 1 ]]; then
+            printf 'Expected one AppImage, found %s\n' "${#appimages[@]}" >&2
+            exit 1
+          fi
+          cp "${appimages[0]}" release/
+          cd release
+          for artifact in *.tgz *.AppImage; do
+            sha256sum "$artifact" > "$artifact.sha256"
+          done
+          sha256sum --check ./*.sha256
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          latest=false
+          if [[ "$GITHUB_REF" == refs/heads/main || "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            default_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)"
+            if [[ "$default_sha" == "$GITHUB_SHA" ]]; then
+              latest=true
+            fi
+          fi
+          args=(
+            "$RELEASE_TAG"
+            release/*
+            --repo "$GITHUB_REPOSITORY"
+            --target "$GITHUB_SHA"
+            --title "bb fork $RELEASE_TAG"
+            --generate-notes
+            "--latest=$latest"
+          )
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            args+=(--verify-tag)
+          fi
+          gh release create "${args[@]}"
