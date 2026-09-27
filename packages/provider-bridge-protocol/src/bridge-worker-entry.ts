@@ -3,6 +3,7 @@ import { isAbsolute } from "node:path";
 import { pathToFileURL } from "node:url";
 import { createPluginProcessTempDir } from "@bb/process-utils";
 import { readBoundedLines } from "./bridge-kit/bounded-line-reader.js";
+import { installBridgeStdioGuards } from "./bridge-kit/bridge-output.js";
 import {
   createRecordingLineSplitter,
   getBridgeRecorder,
@@ -14,6 +15,19 @@ import {
 } from "./bridge-kit/provider-bridge-entry.js";
 
 const [bridgeModulePath, pluginId, dataDir] = process.argv.slice(2);
+
+let shutdownAfterStdoutFailure: () => void = () => process.exit(1);
+installBridgeStdioGuards({
+  stdout: process.stdout,
+  stderr: process.stderr,
+  onStdoutFailure: (error) => {
+    const code: unknown = Reflect.get(error, "code");
+    process.stderr.write(
+      `Provider bridge stdout failed${typeof code === "string" ? ` (${code})` : ""}; shutting down: ${error.message}\n`,
+    );
+    shutdownAfterStdoutFailure();
+  },
+});
 
 function fail(message: string): never {
   process.stderr.write(`${message}\n`);
@@ -97,6 +111,16 @@ if (entry.onSigint) {
   process.once("SIGINT", entry.onSigint);
 }
 
+let closing = false;
+function closeBridge(): void {
+  if (closing) return;
+  closing = true;
+  removeTempDir();
+  entry.onClose?.();
+}
+shutdownAfterStdoutFailure =
+  entry.onClose === undefined ? () => process.exit(1) : closeBridge;
+
 readBoundedLines({
   input: process.stdin,
   onLine:
@@ -111,8 +135,5 @@ readBoundedLines({
       `Discarded an oversized JSON-RPC line from the runtime (${bytes} bytes).\n`,
     );
   },
-  onClose: () => {
-    removeTempDir();
-    entry.onClose?.();
-  },
+  onClose: closeBridge,
 });
