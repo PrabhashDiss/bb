@@ -1,4 +1,5 @@
 import type { BridgeErrorData, ProviderRecoveryHint } from "../errors.js";
+import { createBridgeOutboundQueue } from "./bridge-output.js";
 
 export type BridgeJsonRpcId = string | number;
 
@@ -45,15 +46,17 @@ interface CreateBridgeIoArgs {
   write?: (line: string) => void;
 }
 
-export function createBridgeIo<TMessage>({
-  write = (line) => process.stdout.write(line),
-}: CreateBridgeIoArgs = {}): {
+export function createBridgeIo<TMessage>({ write }: CreateBridgeIoArgs = {}): {
   send: (message: TMessage | BridgeJsonRpcResponse) => void;
   sendError: BridgeSendError;
   sendResult: (id: BridgeJsonRpcId, result: unknown) => void;
 } {
+  const enqueue =
+    write === undefined
+      ? createBridgeOutboundQueue(process.stdout)
+      : (message: unknown) => write(`${JSON.stringify(message)}\n`);
   const send = (message: TMessage | BridgeJsonRpcResponse): void => {
-    write(`${JSON.stringify(message)}\n`);
+    enqueue(message);
   };
   return {
     send,
