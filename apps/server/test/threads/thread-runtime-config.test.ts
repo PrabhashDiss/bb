@@ -843,7 +843,10 @@ describe("thread runtime config", () => {
           sourceType: "data-dir",
           name: "release-notes",
           description: "Use release-notes when server runtime tests run.",
-          treeHash: readSkillTreeManifest(sourceRootPath).treeHash,
+          treeHash: readSkillTreeManifest({
+            sourceRootPath: sourceRootPath,
+            followSymlinks: false,
+          }).treeHash,
           entryPath: "SKILL.md",
         },
       ]);
