@@ -129,7 +129,10 @@ function expectedTreeSource(args: {
     sourceType: args.sourceType,
     name: args.name,
     description: args.description,
-    treeHash: readSkillTreeManifest(args.rootPath).treeHash,
+    treeHash: readSkillTreeManifest({
+      sourceRootPath: args.rootPath,
+      followSymlinks: false,
+    }).treeHash,
     entryPath: "SKILL.md",
   };
 }
@@ -152,20 +155,43 @@ describe("injected skill source discovery", () => {
     await writeFile(firstReference, "same bytes\n");
     await writeFile(secondReference, "same bytes\n");
 
-    const baseline = readSkillTreeManifest(firstRoot).treeHash;
-    expect(readSkillTreeManifest(secondRoot).treeHash).toBe(baseline);
+    const baseline = readSkillTreeManifest({
+      sourceRootPath: firstRoot,
+      followSymlinks: false,
+    }).treeHash;
+    expect(
+      readSkillTreeManifest({
+        sourceRootPath: secondRoot,
+        followSymlinks: false,
+      }).treeHash,
+    ).toBe(baseline);
 
     await writeFile(secondReference, "changed bytes\n");
-    expect(readSkillTreeManifest(secondRoot).treeHash).not.toBe(baseline);
+    expect(
+      readSkillTreeManifest({
+        sourceRootPath: secondRoot,
+        followSymlinks: false,
+      }).treeHash,
+    ).not.toBe(baseline);
     await writeFile(secondReference, "same bytes\n");
 
     const renamedReference = path.join(secondRoot, "references", "renamed.md");
     await rename(secondReference, renamedReference);
-    expect(readSkillTreeManifest(secondRoot).treeHash).not.toBe(baseline);
+    expect(
+      readSkillTreeManifest({
+        sourceRootPath: secondRoot,
+        followSymlinks: false,
+      }).treeHash,
+    ).not.toBe(baseline);
     await rename(renamedReference, secondReference);
 
     await chmod(secondReference, 0o755);
-    expect(readSkillTreeManifest(secondRoot).treeHash).not.toBe(baseline);
+    expect(
+      readSkillTreeManifest({
+        sourceRootPath: secondRoot,
+        followSymlinks: false,
+      }).treeHash,
+    ).not.toBe(baseline);
   });
 
   it("hashes Unicode paths in locale-independent code-point order", () => {
@@ -249,7 +275,7 @@ describe("injected skill source discovery", () => {
     });
   });
 
-  it("rejects symlinked skill directories", async () => {
+  it("follows symlinked skill directories in the data directory", async () => {
     const dataDir = await makeTempDir();
     const outsideRoot = await makeTempDir();
     const skillsRootPath = path.join(dataDir, "skills");
@@ -268,11 +294,15 @@ describe("injected skill source discovery", () => {
       resolveInjectedSkillSources(logger, {
         dataDir,
       }),
-    ).toEqual([]);
-    expect(warnings[0]?.context).toMatchObject({
-      reason: "Skill directory is a symlink",
-      sourceType: "data-dir",
-    });
+    ).toEqual([
+      expectedTreeSource({
+        rootPath: path.join(skillsRootPath, "outside-skill"),
+        sourceType: "data-dir",
+        name: "outside-skill",
+        description: "Use outside-skill when tests need it.",
+      }),
+    ]);
+    expect(warnings).toEqual([]);
   });
 
   it("adds inherited skills as lower-priority user skills", async () => {
