@@ -91,9 +91,12 @@ describe("installServerRegistrySkill", () => {
         (await stat(join(skillDirectory, REGISTRY_SKILL_PROVENANCE_FILE_NAME)))
           .mode & 0o777,
       ).toBe(0o444);
-      expect(readSkillTreeManifest(skillDirectory).entries).toEqual([
-        expect.objectContaining({ path: "SKILL.md" }),
-      ]);
+      expect(
+        readSkillTreeManifest({
+          sourceRootPath: skillDirectory,
+          followSymlinks: false,
+        }).entries,
+      ).toEqual([expect.objectContaining({ path: "SKILL.md" })]);
     } finally {
       await rm(dataDir, { recursive: true, force: true });
     }
