@@ -14,8 +14,14 @@ describe("internal skill tree routes", () => {
       await mkdir(rootPath, { recursive: true });
       await writeFile(path.join(rootPath, "SKILL.md"), "tree route bytes\n");
       await chmod(path.join(rootPath, "SKILL.md"), 0o644);
-      const manifest = readSkillTreeManifest(rootPath);
-      harness.deps.skillTreeRegistry.register(manifest.treeHash, rootPath);
+      const manifest = readSkillTreeManifest({
+        sourceRootPath: rootPath,
+        followSymlinks: false,
+      });
+      harness.deps.skillTreeRegistry.register(manifest.treeHash, {
+        sourceRootPath: rootPath,
+        followSymlinks: false,
+      });
 
       const response = await harness.app.request(
         `/internal/skills/tree/${manifest.treeHash}`,
