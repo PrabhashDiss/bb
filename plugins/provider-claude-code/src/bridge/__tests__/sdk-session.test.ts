@@ -243,7 +243,7 @@ describe("SdkSession", () => {
     expect(queryMock).toHaveBeenCalledWith(
       expect.objectContaining({
         options: expect.objectContaining({
-          settingSources: ["user", "project", "local"],
+          settingSources: ["user"],
         }),
       }),
     );
