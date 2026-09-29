@@ -410,16 +410,19 @@ const CLAUDE_USER_NAMES = [
   ...CLAUDE_PLUGIN_USER_SKILLS,
   ...CLAUDE_PLUGIN_USER_COMMANDS,
 ];
-const CLAUDE_PROJECT_NAMES = [
+const CLAUDE_PROJECT_SKILLS = [
   "cwd-claude-skill",
   "ws-claude-skill",
   "pkg-claude-skill",
+];
+const CLAUDE_PROJECT_NAMES = [
   "cwd-review",
   "frontend:cwd-component",
   ...CLAUDE_PLUGIN_PROJECT_SKILLS,
   ...CLAUDE_PLUGIN_PROJECT_COMMANDS,
 ];
 const CLAUDE_ABSENT = [
+  ...CLAUDE_PROJECT_SKILLS,
   "ws-command",
   "above-root-claude-skill",
   ...CLAUDE_PLUGIN_ABSENT,
@@ -573,12 +576,8 @@ function codexVariant(
     build: (paths) => buildCodex(paths, codexHomeFor(paths)),
     expected: {
       workspace: {
-        present: [
-          ...CODEX_PROJECT_NAMES,
-          ...CODEX_USER_NAMES,
-          ...extraUserNames,
-        ],
-        absent: CODEX_ABSENT,
+        present: [...CODEX_USER_NAMES, ...extraUserNames],
+        absent: [...CODEX_ABSENT, ...CODEX_PROJECT_NAMES],
       },
       userOnly: {
         present: [...CODEX_USER_NAMES, ...extraUserNames],
