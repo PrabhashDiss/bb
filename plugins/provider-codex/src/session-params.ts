@@ -633,7 +633,9 @@ function buildShellEnvironmentPolicyConfig(
 export function buildCodexConfig(
   args: BuildCodexConfigArgs,
 ): { [key in string]?: JsonValue } | undefined {
-  const config: { [key in string]?: JsonValue } = {};
+  const config: { [key in string]?: JsonValue } = {
+    project_doc_max_bytes: 0,
+  };
   if (args.threadId) {
     config["shell_environment_policy.set.BB_THREAD_ID"] = args.threadId;
   }

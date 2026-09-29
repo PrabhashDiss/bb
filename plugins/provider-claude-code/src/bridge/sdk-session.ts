@@ -261,7 +261,7 @@ export class SdkSession {
           }
         : {}),
       includePartialMessages: true,
-      settingSources: ["user", "project", "local"],
+      settingSources: ["user"],
       persistSession: true,
       env: this.options.env ?? process.env,
       stderr: onStderr,
