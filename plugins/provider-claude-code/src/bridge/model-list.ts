@@ -11,7 +11,7 @@ function buildModelProbeOptions(env: NodeJS.ProcessEnv): Options {
     env,
     maxTurns: 0,
     persistSession: false,
-    settingSources: ["user", "project", "local"],
+    settingSources: ["user"],
     ...(pathToClaudeCodeExecutable ? { pathToClaudeCodeExecutable } : {}),
   };
 }
