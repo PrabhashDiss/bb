@@ -14,12 +14,8 @@ export const CLAUDE_NATIVE_ROOTS_DECLARATION: Pick<
   | "experimental_resolvesNativeRoots"
 > = {
   experimental_nativeSkillRoots: {
-    project: [
-      {
-        path: ".claude/skills",
-        ancestors: true,
-        skipIfManifest: ".claude-plugin/plugin.json",
-      },
+    user: [
+      { path: ".claude/skills", skipIfManifest: ".claude-plugin/plugin.json" },
     ],
   },
   experimental_nativeCommandRoots: {
