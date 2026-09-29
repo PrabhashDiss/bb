@@ -163,6 +163,77 @@ describe("SdkSession", () => {
     expect(mockQueryInstance.close).toHaveBeenCalledOnce();
   });
 
+  it("forwards local plugins to the SDK without a skills allowlist", () => {
+    const onMessage = vi.fn();
+    const onDone = vi.fn();
+    const session = new SdkSession(
+      {
+        ...defaultOptions,
+        plugins: [{ type: "local", path: "/tmp/bb-skills" }],
+      },
+      onMessage,
+      onDone,
+    );
+
+    session.start();
+
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({
+          plugins: [{ type: "local", path: "/tmp/bb-skills" }],
+        }),
+      }),
+    );
+    expect(queryMock.mock.calls[0]?.[0]?.options).not.toHaveProperty("skills");
+  });
+
+  it("uses user Claude Code settings without project settings or skills", () => {
+    const onMessage = vi.fn();
+    const onDone = vi.fn();
+    const session = new SdkSession(defaultOptions, onMessage, onDone);
+
+    session.start();
+
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({
+          settingSources: ["user"],
+        }),
+      }),
+    );
+  });
+
+  it("forwards max reasoning effort and thinking display to the SDK when configured", () => {
+    const onMessage = vi.fn();
+    const onDone = vi.fn();
+    const session = new SdkSession(
+      {
+        ...defaultOptions,
+        effort: "max",
+        thinking: {
+          type: "adaptive",
+          display: "summarized",
+        },
+      },
+      onMessage,
+      onDone,
+    );
+
+    session.start();
+
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({
+          effort: "max",
+          thinking: {
+            type: "adaptive",
+            display: "summarized",
+          },
+        }),
+      }),
+    );
+  });
+
   it("forwards an explicit Claude Code executable path to the SDK", () => {
     const onMessage = vi.fn();
     const onDone = vi.fn();
