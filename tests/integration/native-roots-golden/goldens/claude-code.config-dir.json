@@ -18,13 +18,6 @@
         "argumentHint": null
       },
       {
-        "name": "cwd-claude-skill",
-        "source": "skill",
-        "origin": "project",
-        "description": "cwd-claude-skill skill",
-        "argumentHint": null
-      },
-      {
         "name": "cwd-review",
         "source": "command",
         "origin": "project",
@@ -102,13 +95,6 @@
         "argumentHint": null
       },
       {
-        "name": "pkg-claude-skill",
-        "source": "skill",
-        "origin": "project",
-        "description": "pkg-claude-skill skill",
-        "argumentHint": null
-      },
-      {
         "name": "project-plugin:project-plugin-cmd",
         "source": "command",
         "origin": "project",
@@ -163,13 +149,6 @@
         "origin": "user",
         "description": "user-plugin-skill skill",
         "argumentHint": null
-      },
-      {
-        "name": "ws-claude-skill",
-        "source": "skill",
-        "origin": "project",
-        "description": "ws-claude-skill skill",
-        "argumentHint": null
       }
     ],
     "skills": [
@@ -185,13 +164,6 @@
         "description": "configdir-claude-skill skill",
         "filePath": "<root>/claude-config/skills/configdir-claude-skill/SKILL.md",
         "rootKind": "provider-user",
-        "linked": false
-      },
-      {
-        "name": "cwd-claude-skill",
-        "description": "cwd-claude-skill skill",
-        "filePath": "<root>/ws/packages/app/.claude/skills/cwd-claude-skill/SKILL.md",
-        "rootKind": "provider-project",
         "linked": false
       },
       {
@@ -251,13 +223,6 @@
         "linked": false
       },
       {
-        "name": "pkg-claude-skill",
-        "description": "pkg-claude-skill skill",
-        "filePath": "<root>/ws/packages/.claude/skills/pkg-claude-skill/SKILL.md",
-        "rootKind": "provider-project",
-        "linked": false
-      },
-      {
         "name": "project-plugin:project-plugin-skill",
         "description": "project-plugin-skill skill",
         "filePath": "<root>/ws/packages/app/.claude/plugins/cache/golden-market/project-plugin/1.0.0/skills/project-plugin-skill/SKILL.md",
@@ -290,13 +255,6 @@
         "description": "user-plugin-skill skill",
         "filePath": "<root>/claude-config/plugins/cache/golden-market/user-plugin/1.0.0/skills/user-plugin-skill/SKILL.md",
         "rootKind": "plugin",
-        "linked": false
-      },
-      {
-        "name": "ws-claude-skill",
-        "description": "ws-claude-skill skill",
-        "filePath": "<root>/ws/.claude/skills/ws-claude-skill/SKILL.md",
-        "rootKind": "provider-project",
         "linked": false
       }
     ]
