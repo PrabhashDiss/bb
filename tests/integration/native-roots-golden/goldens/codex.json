@@ -25,20 +25,6 @@
         "argumentHint": null
       },
       {
-        "name": "cwd-agents-skill",
-        "source": "skill",
-        "origin": "project",
-        "description": "cwd-agents-skill skill",
-        "argumentHint": null
-      },
-      {
-        "name": "cwd-codex-skill",
-        "source": "skill",
-        "origin": "project",
-        "description": "cwd-codex-skill skill",
-        "argumentHint": null
-      },
-      {
         "name": "home-agents-skill",
         "source": "skill",
         "origin": "user",
@@ -60,13 +46,6 @@
         "argumentHint": null
       },
       {
-        "name": "pkg-agents-skill",
-        "source": "skill",
-        "origin": "project",
-        "description": "pkg-agents-skill skill",
-        "argumentHint": null
-      },
-      {
         "name": "system-codex-skill",
         "source": "skill",
         "origin": "user",
@@ -78,13 +57,6 @@
         "source": "skill",
         "origin": "user",
         "description": "unlisted-plugin-skill skill",
-        "argumentHint": null
-      },
-      {
-        "name": "ws-agents-skill",
-        "source": "skill",
-        "origin": "project",
-        "description": "ws-agents-skill skill",
         "argumentHint": null
       }
     ],
@@ -111,20 +83,6 @@
         "linked": false
       },
       {
-        "name": "cwd-agents-skill",
-        "description": "cwd-agents-skill skill",
-        "filePath": "<root>/ws/packages/app/.agents/skills/cwd-agents-skill/SKILL.md",
-        "rootKind": "provider-project",
-        "linked": false
-      },
-      {
-        "name": "cwd-codex-skill",
-        "description": "cwd-codex-skill skill",
-        "filePath": "<root>/ws/packages/app/.codex/skills/cwd-codex-skill/SKILL.md",
-        "rootKind": "provider-project",
-        "linked": false
-      },
-      {
         "name": "home-agents-skill",
         "description": "home-agents-skill skill",
         "filePath": "<home>/.agents/skills/home-agents-skill/SKILL.md",
@@ -146,13 +104,6 @@
         "linked": true
       },
       {
-        "name": "pkg-agents-skill",
-        "description": "pkg-agents-skill skill",
-        "filePath": "<root>/ws/packages/.agents/skills/pkg-agents-skill/SKILL.md",
-        "rootKind": "provider-project",
-        "linked": false
-      },
-      {
         "name": "system-codex-skill",
         "description": "system-codex-skill skill",
         "filePath": "<home>/.codex/skills/.system/system-codex-skill/SKILL.md",
@@ -164,13 +115,6 @@
         "description": "unlisted-plugin-skill skill",
         "filePath": "<home>/.codex/plugins/cache/golden-market/unlisted-plugin/1.0.0/skills/unlisted-plugin-skill/SKILL.md",
         "rootKind": "plugin",
-        "linked": false
-      },
-      {
-        "name": "ws-agents-skill",
-        "description": "ws-agents-skill skill",
-        "filePath": "<root>/ws/.agents/skills/ws-agents-skill/SKILL.md",
-        "rootKind": "provider-project",
         "linked": false
       }
     ]

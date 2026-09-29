@@ -33,7 +33,7 @@ export async function probeClaudeInitialization(args: {
         cwd: args.cwd,
         env: args.env,
         persistSession: false,
-        settingSources: ["user", "project", "local"],
+        settingSources: ["user"],
         ...(pathToClaudeCodeExecutable ? { pathToClaudeCodeExecutable } : {}),
       },
     });
