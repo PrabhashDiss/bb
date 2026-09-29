@@ -3163,7 +3163,7 @@ describe("bridge", () => {
       expect(queryOptions.env?.HOME).toBe("/Users/test-bb");
       expect(queryOptions.env?.CLAUDE_CODE_ENTRYPOINT).toBe("cli");
       expect(queryOptions.env?.CLAUDE_AGENT_SDK_CLIENT_APP).toBeUndefined();
-      expect(queryOptions.settingSources).toEqual(["user", "project", "local"]);
+      expect(queryOptions.settingSources).toEqual(["user"]);
 
       bridge.sendRequest(2, "thread/stop", {
         threadId: "thread-home-config",

@@ -17,7 +17,6 @@ export const CODEX_NATIVE_ROOTS_DECLARATION: Pick<
 > = {
   experimental_nativeSkillRoots: {
     user: [".codex/skills", ".agents/skills"],
-    project: [".codex/skills", { path: ".agents/skills", ancestors: true }],
   },
   experimental_resolvesNativeRoots: true,
 };
