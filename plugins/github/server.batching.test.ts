@@ -106,6 +106,7 @@ it("maps all four lists into SQLite and preserves closed/merged filtering", asyn
         author: "app/robot[bot]",
         labels: ["bug"],
         assignees: ["alice"],
+        reviewRequests: [],
         body: "Body\ntext",
         url: "https://github.com/acme/one/issues/1",
         updatedAt: "2026-09-10T00:00:00Z",

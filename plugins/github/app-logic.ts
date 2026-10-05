@@ -6,6 +6,7 @@ export type Item = PluginRpcResult<
 >["items"][number];
 
 export type Route =
+  | { view: "inbox" }
   | { view: "issues" }
   | { view: "pulls" }
   | { view: "new" }
@@ -14,6 +15,7 @@ export type Route =
 
 export function parseSubPath(subPath: string): Route {
   const parts = subPath.split("/").filter((part) => part.length > 0);
+  if (parts[0] === "inbox") return { view: "inbox" };
   if (parts[0] === "pulls" && parts.length === 4) {
     const number = Number(parts[3]);
     if (Number.isFinite(number)) {
@@ -28,11 +30,14 @@ export function parseSubPath(subPath: string): Route {
       return { view: "issue", repo: `${parts[1]}/${parts[2]}`, number };
     }
   }
-  return { view: "issues" };
+  if (parts[0] === "issues") return { view: "issues" };
+  return { view: "inbox" };
 }
 
 export function routeToSubPath(route: Route): string {
   switch (route.view) {
+    case "inbox":
+      return "inbox";
     case "issues":
       return "issues";
     case "pulls":
@@ -107,6 +112,17 @@ export function parseQuery(query: string): ParsedQuery {
     }
   }
   return parsed;
+}
+
+export function isPrInboxItem(item: Item, viewer: string | null): boolean {
+  if (item.kind !== "pr" || item.state !== "OPEN" || viewer === null) {
+    return false;
+  }
+  const login = viewer.toLowerCase();
+  return (
+    item.assignees.some((assignee) => assignee.toLowerCase() === login) ||
+    item.reviewRequests.some((reviewer) => reviewer.toLowerCase() === login)
+  );
 }
 
 export function matchesQuery(
