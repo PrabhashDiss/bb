@@ -14,6 +14,7 @@ import {
 } from "@get-bb/plugin-sdk/app";
 import {
   buildSuggestions,
+  isPrInboxItem,
   matchesQuery,
   parseQuery,
   parseSubPath,
@@ -2072,12 +2073,14 @@ function GithubPanel({ subPath }: PluginNavPanelProps) {
 
 function ListView({
   kind,
+  routeView,
   query,
   setQuery,
   repos,
   onOpenItem,
 }: {
   kind: "issue" | "pr";
+  routeView: Route["view"];
   query: string;
   setQuery: (query: string) => void;
   repos: RepoInfo[];
@@ -2090,8 +2093,12 @@ function ListView({
     () =>
       items === null
         ? null
-        : items.filter((item) => matchesQuery(item, parsed, viewer)),
-    [items, parsed, viewer],
+        : items.filter(
+            (item) =>
+              matchesQuery(item, parsed, viewer) &&
+              (routeView !== "inbox" || isPrInboxItem(item, viewer)),
+          ),
+    [items, parsed, viewer, routeView],
   );
   return (
     <>
@@ -2190,7 +2197,8 @@ function GithubPanelBody({
     );
   }
 
-  const kind = route.view === "pulls" ? "pr" : "issue";
+  const kind =
+    route.view === "pulls" || route.view === "inbox" ? "pr" : "issue";
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
@@ -2198,11 +2206,16 @@ function GithubPanelBody({
           value={route.view}
           onValueChange={(value) => {
             navigate(
-              value === "pulls" ? { view: "pulls" } : { view: "issues" },
+              value === "issues"
+                ? { view: "issues" }
+                : value === "pulls"
+                  ? { view: "pulls" }
+                  : { view: "inbox" },
             );
           }}
         >
           <TabsList>
+            <TabsTrigger value="inbox">PR inbox</TabsTrigger>
             <TabsTrigger value="issues">Issues</TabsTrigger>
             <TabsTrigger value="pulls">Pull requests</TabsTrigger>
           </TabsList>
@@ -2217,6 +2230,7 @@ function GithubPanelBody({
 
       <ListView
         kind={kind}
+        routeView={route.view}
         query={query}
         setQuery={setQuery}
         repos={status?.repos ?? []}

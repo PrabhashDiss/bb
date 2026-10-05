@@ -18,6 +18,7 @@ const issue: Item = {
   author: "alice",
   labels: ["bug", "good first issue"],
   assignees: ["octocat"],
+  reviewRequests: [],
   url: "https://github.com/acme/widgets/issues/7",
   body: "",
   updatedAt: "2026-08-19T12:00:00Z",
@@ -48,7 +49,7 @@ describe("github panel routes", () => {
     expect(parseSubPath("issues/acme/widgets/7/extra")).toEqual({
       view: "issues",
     });
-    expect(parseSubPath("")).toEqual({ view: "issues" });
+    expect(parseSubPath("")).toEqual({ view: "inbox" });
   });
 });
 

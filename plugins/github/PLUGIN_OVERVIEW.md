@@ -2,7 +2,7 @@ See the open issues and pull requests of your repositories inside bb. Hand one t
 
 ## What you get
 
-- A GitHub panel with Issues and Pull requests tabs across every tracked repository. It has a repository filter and a New issue form.
+- A GitHub panel that defaults to open pull requests assigned to you or awaiting your review. Issues and all pull requests remain available across every tracked repository. It has a repository filter and a New issue form.
 - Issue details: body, comments, a comment box, and editing of status, assignee, and labels.
 - Send agent on an issue, or Review with agent on a pull request. bb starts a thread in the repository's project and links it from the item.
 - Mentions. Type `@` or `#` in any composer to attach an issue or pull request. Its title, body, and state go to the agent at send time.
