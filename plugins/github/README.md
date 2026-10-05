@@ -10,9 +10,10 @@ bb plugin install github
 
 ## What it does
 
-- **Sidebar panel** (GitHub logo, full width): Issues and Pull requests tabs
-  across every tracked repo, with a repo filter (persisted in localStorage)
-  and a New issue form.
+- **Sidebar panel** (GitHub logo, full width): defaults to a PR inbox showing
+  open pull requests assigned to you or awaiting your review. Issues and all
+  pull requests remain available across every tracked repo, with a repo filter
+  (persisted in localStorage) and a New issue form.
 - **Issue detail**: markdown body, comments, comment box, status,
   assignee, and label editing, plus "Send agent".
   Deep-linkable via the URL hash: `#/issues/<owner>/<repo>/<number>`.
