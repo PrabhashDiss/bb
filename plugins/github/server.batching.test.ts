@@ -36,7 +36,12 @@ function node(number: number, state = "OPEN") {
     author: { login: "robot[bot]" },
     labels: { nodes: [{ name: "bug" }] },
     assignees: { nodes: [{ login: "alice" }] },
-    reviewRequests: { nodes: [{ login: "alice" }] },
+    reviewRequests: {
+      nodes: [
+        { requestedReviewer: { login: "alice" } },
+        { requestedReviewer: { slug: "team-reviewers" } },
+      ],
+    },
     body: "Body\ntext",
     url: `https://github.com/acme/one/issues/${number}`,
     updatedAt: "2026-09-10T00:00:00Z",
@@ -124,7 +129,9 @@ it("maps all four lists into SQLite and preserves closed/merged filtering", asyn
     fake.calls
       .find((args) => args[1] === "graphql")
       ?.find((arg) => arg.startsWith("query=")),
-  ).toContain("reviewRequests(first: 100)");
+  ).toContain(
+    "reviewRequests(first: 100) { nodes { requestedReviewer { ... on User { login } } } }",
+  );
   expect(fake.calls.filter((args) => args[1] === "graphql")).toHaveLength(1);
 });
 

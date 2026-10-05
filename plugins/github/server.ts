@@ -434,7 +434,15 @@ const listNodeSchema = z.object({
   }),
   reviewRequests: z
     .object({
-      nodes: z.array(z.object({ login: z.string().optional() })).max(100),
+      nodes: z
+        .array(
+          z.object({
+            requestedReviewer: z
+              .object({ login: z.string().optional() })
+              .nullable(),
+          }),
+        )
+        .max(100),
     })
     .optional(),
   url: z.string(),
@@ -476,7 +484,7 @@ const listFields = `
   url body updatedAt
 `;
 const pullListFields = `${listFields}
-  reviewRequests(first: 100) { nodes { ... on User { login } } }
+  reviewRequests(first: 100) { nodes { requestedReviewer { ... on User { login } } } }
 `;
 const repositoryListsQuery = `query RepositoryLists($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
@@ -534,7 +542,7 @@ async function fetchRepoItems(
       reviewRequests:
         kind === "pr"
           ? (entry.reviewRequests?.nodes ?? [])
-              .map((reviewer) => reviewer.login)
+              .map((request) => request.requestedReviewer?.login)
               .filter((login): login is string => login !== undefined)
           : [],
       url: entry.url,
