@@ -196,14 +196,10 @@ export function RootComposePanelTabContent({
             onSelectFileSearchResult(selection);
           }}
           recentItemsThreadId={ROOT_COMPOSE_FIXED_PANEL_STATE_ID}
-          onOpenBrowser={
-            rootPanelThreadId
-              ? () => {
-                  onActivateTab(tab.id);
-                  onOpenBrowser();
-                }
-              : undefined
-          }
+          onOpenBrowser={() => {
+            onActivateTab(tab.id);
+            onOpenBrowser();
+          }}
           onStartTerminal={
             canCreateTerminal
               ? () => {

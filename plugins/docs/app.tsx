@@ -1217,7 +1217,11 @@ function HtmlPreview({
   );
 }
 
-function DocumentPicker() {
+function DocumentPicker({
+  onSelect,
+}: {
+  onSelect: (document: DocumentRef) => void;
+}) {
   const [subPath, setSubPath] = useState("");
   const navigate = useBbNavigate();
   return (
@@ -1236,11 +1240,16 @@ function DocumentPicker() {
               /\.(md|html?)$/i,
               "",
             );
-            navigate.openThreadPanel({
-              actionId: "document",
-              title,
-              params: { vaultId, path: filePath, title },
-            });
+            const document = { vaultId, path: filePath, title };
+            if (
+              !navigate.openThreadPanel({
+                actionId: "document",
+                title,
+                params: document,
+              })
+            ) {
+              onSelect(document);
+            }
           } else setSubPath(next);
         }}
       />
@@ -1248,10 +1257,13 @@ function DocumentPicker() {
   );
 }
 
-function DocumentPanel({ params }: PluginThreadPanelProps) {
-  const document = parseDocumentRef(params);
+function DocumentPanel({ params }: Pick<PluginThreadPanelProps, "params">) {
+  const [selectedDocument, setSelectedDocument] = useState<DocumentRef | null>(
+    null,
+  );
+  const document = parseDocumentRef(params) ?? selectedDocument;
   const navigate = useBbNavigate();
-  if (!document) return <DocumentPicker />;
+  if (!document) return <DocumentPicker onSelect={setSelectedDocument} />;
   if (!/\.html?$/i.test(document.path))
     return <InlineDocument document={document} />;
   return (
@@ -2412,6 +2424,12 @@ export default definePluginApp((app) => {
     ],
   });
   app.slots.threadPanelAction({
+    id: "document",
+    title: "Document",
+    icon: "FileText",
+    component: DocumentPanel,
+  });
+  app.slots.experimental_newThreadPanelAction({
     id: "document",
     title: "Document",
     icon: "FileText",
