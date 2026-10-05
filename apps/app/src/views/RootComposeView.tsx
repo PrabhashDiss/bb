@@ -60,6 +60,7 @@ import {
   preloadThreadSecondaryPanel,
 } from "@/components/secondary-panel/lazySecondaryPanelComponents";
 import type { BrowserAddressFocusRequest } from "@/components/secondary-panel/BrowserTabContent";
+import { BrowserTabLifecycleObserver } from "@/components/secondary-panel/BrowserTabLifecycleObserver";
 import { EmptyStatePanel } from "@bb/shared-ui/empty-state";
 import { Icon } from "@bb/shared-ui/icon";
 import { PageShell } from "@/components/ui/page-shell.js";
@@ -1153,13 +1154,10 @@ function RootComposeSurface({
   );
   const openBrowserTabAndReveal = useCallback(
     (url?: string) => {
-      if (rootPanelThreadId === null) {
-        return;
-      }
       openBrowserTab(url);
       openCompactDrawer();
     },
-    [openBrowserTab, openCompactDrawer, rootPanelThreadId],
+    [openBrowserTab, openCompactDrawer],
   );
   const handleBrowserAddressFocusRequestConsumed = useCallback(
     (request: BrowserAddressFocusRequest) => {
@@ -1207,9 +1205,6 @@ function RootComposeSurface({
       canShowNativeBrowserView: boolean;
       onNativeFocus: () => void;
     }) => {
-      if (rootPanelThreadId === null) {
-        return null;
-      }
       return (
         <LazyBrowserTabDeck
           browserTabs={browserTabs}
@@ -1222,7 +1217,7 @@ function RootComposeSurface({
           canShowNativeBrowserView={canShowNativeBrowserView}
           canHandleBrowserCommands={canHandleBrowserCommands}
           onNativeFocus={onNativeFocus}
-          threadId={rootPanelThreadId}
+          threadId={ROOT_COMPOSE_FIXED_PANEL_STATE_ID}
           onUpdate={updateBrowserTab}
         />
       );
@@ -1232,7 +1227,6 @@ function RootComposeSurface({
       browserTabs,
       handleBrowserAddressFocusRequestConsumed,
       rootPanelEnvironmentId,
-      rootPanelThreadId,
       updateBrowserTab,
     ],
   );
@@ -1409,7 +1403,6 @@ function RootComposeSurface({
   const handleOpenPanelLink = useCallback<MarkdownPreviewLinkHandler>(
     ({ href }) => {
       if (
-        rootPanelThreadId === null ||
         resolveUrlOpenTarget({
           desktopBrowserAvailable,
           openLinksInAppBrowser,
@@ -1421,12 +1414,7 @@ function RootComposeSurface({
       openBrowserTabAndReveal(href);
       return true;
     },
-    [
-      desktopBrowserAvailable,
-      openBrowserTabAndReveal,
-      openLinksInAppBrowser,
-      rootPanelThreadId,
-    ],
+    [desktopBrowserAvailable, openBrowserTabAndReveal, openLinksInAppBrowser],
   );
   const renderRootPanelTabContent = useCallback(
     (
@@ -1793,14 +1781,16 @@ function RootComposeSurface({
         onClose={handleCloseWindowRequest}
         onToggle={handleToggleSecondaryPanel}
       />
+      <BrowserTabLifecycleObserver
+        browserTabs={browserTabs}
+        threadId={ROOT_COMPOSE_FIXED_PANEL_STATE_ID}
+      />
       {machineSetupDialog}
       {rootPanelToggle}
       <PluginComposerHostProvider value={pluginComposerHost}>
         <UrlOpenRoutingProvider
           openInAppBrowser={
-            desktopBrowserAvailable && rootPanelThreadId !== null
-              ? openBrowserTabAndReveal
-              : null
+            desktopBrowserAvailable ? openBrowserTabAndReveal : null
           }
         >
           <AppNavigationHostProvider capabilities={appNavigationCapabilities}>
