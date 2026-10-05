@@ -491,7 +491,7 @@ const repositoryListsQuery = `query RepositoryLists($owner: String!, $name: Stri
       nodes { ${pullListFields} }
     }
     closedPrs: pullRequests(first: ${CLOSED_PR_PAGE}, states: [CLOSED, MERGED], orderBy: {field: CREATED_AT, direction: DESC}) {
-      nodes { ${pullListFields} }
+      nodes { ${listFields} }
     }
   }
 }`;
