@@ -72,6 +72,80 @@ describe("GitHub app navigation", () => {
     slot.lifecycle.unmount();
   });
 
+  it("opens to the viewer's open pull request inbox and keeps all pull requests accessible", async () => {
+    const slot = renderSlot(
+      app.navPanels[0]!,
+      { subPath: "" },
+      {
+        rpc: {
+          listItems: () => ({
+            items: [
+              {
+                repo: "get-bb/bb",
+                number: 1,
+                kind: "pr",
+                title: "Assigned to viewer",
+                state: "OPEN",
+                author: "alice",
+                labels: [],
+                assignees: ["octocat"],
+                reviewRequests: [],
+                url: "https://github.com/get-bb/bb/pull/1",
+                body: "",
+                updatedAt: "2026-08-20T00:00:00.000Z",
+              },
+              {
+                repo: "get-bb/bb",
+                number: 2,
+                kind: "pr",
+                title: "Review requested",
+                state: "OPEN",
+                author: "alice",
+                labels: [],
+                assignees: [],
+                reviewRequests: ["octocat"],
+                url: "https://github.com/get-bb/bb/pull/2",
+                body: "",
+                updatedAt: "2026-08-20T00:00:00.000Z",
+              },
+              {
+                repo: "get-bb/bb",
+                number: 3,
+                kind: "pr",
+                title: "Unrelated pull request",
+                state: "OPEN",
+                author: "alice",
+                labels: [],
+                assignees: [],
+                reviewRequests: [],
+                url: "https://github.com/get-bb/bb/pull/3",
+                body: "",
+                updatedAt: "2026-08-20T00:00:00.000Z",
+              },
+            ],
+          }),
+          status: () => ({
+            ghOk: true,
+            ghState: "ready",
+            ghError: null,
+            repos: [{ repo: "get-bb/bb", projectId: null }],
+            lastSyncedAt: null,
+          }),
+          viewer: () => ({ login: "octocat" }),
+        },
+      },
+    );
+
+    expect(await slot.findByText("Assigned to viewer")).toBeTruthy();
+    expect(await slot.findByText("Review requested")).toBeTruthy();
+    expect(slot.queryByText("Unrelated pull request")).toBeNull();
+    expect(
+      slot.getByRole("tab", { name: "PR inbox" }).getAttribute("data-state"),
+    ).toBe("active");
+    expect(slot.getByRole("tab", { name: "Pull requests" })).toBeTruthy();
+    slot.lifecycle.unmount();
+  });
+
   it("uses the standard responsive page inset for the main panel", () => {
     const slot = renderSlot(
       app.navPanels[0]!,

@@ -42,6 +42,7 @@ const itemSchema = z
     author: z.string(),
     labels: z.array(z.string()),
     assignees: z.array(z.string()),
+    reviewRequests: z.array(z.string()),
     url: z.string(),
     body: z.string(),
     updatedAt: z.string(),
@@ -431,6 +432,11 @@ const listNodeSchema = z.object({
   assignees: z.object({
     nodes: z.array(z.object({ login: z.string() })).max(100),
   }),
+  reviewRequests: z
+    .object({
+      nodes: z.array(z.object({ login: z.string().optional() })).max(100),
+    })
+    .optional(),
   url: z.string(),
   body: z.string(),
   updatedAt: z.string(),
@@ -469,6 +475,9 @@ const listFields = `
   assignees(first: 100) { nodes { login } }
   url body updatedAt
 `;
+const pullListFields = `${listFields}
+  reviewRequests(first: 100) { nodes { ... on User { login } } }
+`;
 const repositoryListsQuery = `query RepositoryLists($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     hasIssuesEnabled
@@ -479,10 +488,10 @@ const repositoryListsQuery = `query RepositoryLists($owner: String!, $name: Stri
       nodes { ${listFields} }
     }
     openPrs: pullRequests(first: ${PR_PAGE}, states: [OPEN], orderBy: {field: CREATED_AT, direction: DESC}) {
-      nodes { ${listFields} }
+      nodes { ${pullListFields} }
     }
     closedPrs: pullRequests(first: ${CLOSED_PR_PAGE}, states: [CLOSED, MERGED], orderBy: {field: CREATED_AT, direction: DESC}) {
-      nodes { ${listFields} }
+      nodes { ${pullListFields} }
     }
   }
 }`;
@@ -522,6 +531,12 @@ async function fetchRepoItems(
         : `app/${entry.author?.login ?? ""}`,
       labels: entry.labels.nodes.map((label) => label.name),
       assignees: entry.assignees.nodes.map((user) => user.login),
+      reviewRequests:
+        kind === "pr"
+          ? (entry.reviewRequests?.nodes ?? [])
+              .map((reviewer) => reviewer.login)
+              .filter((login): login is string => login !== undefined)
+          : [],
       url: entry.url,
       body: entry.body,
       updatedAt: entry.updatedAt,
@@ -711,6 +726,7 @@ export default async function plugin(bb: BbPluginApi) {
        PRIMARY KEY (repo, kind, number)
      )`,
     `ALTER TABLE items ADD COLUMN assignees TEXT NOT NULL DEFAULT '[]'`,
+    `ALTER TABLE items ADD COLUMN review_requests TEXT NOT NULL DEFAULT '[]'`,
   ]);
 
   function parseStringArray(raw: unknown): string[] {
@@ -731,6 +747,7 @@ export default async function plugin(bb: BbPluginApi) {
       author: String(row.author),
       labels: parseStringArray(row.labels),
       assignees: parseStringArray(row.assignees),
+      reviewRequests: parseStringArray(row.review_requests),
       url: String(row.url),
       body: String(row.body),
       updatedAt: String(row.updated_at),
@@ -791,8 +808,8 @@ export default async function plugin(bb: BbPluginApi) {
 
   function replaceRepoRows(repo: string, items: CachedItem[]): void {
     const insert = db.prepare(
-      `INSERT INTO items (repo, number, kind, title, state, author, labels, assignees, url, body, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO items (repo, number, kind, title, state, author, labels, assignees, review_requests, url, body, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     );
     db.transaction(() => {
       db.prepare("DELETE FROM items WHERE repo = ?").run(repo);
@@ -806,6 +823,7 @@ export default async function plugin(bb: BbPluginApi) {
           item.author,
           JSON.stringify(item.labels),
           JSON.stringify(item.assignees),
+          JSON.stringify(item.reviewRequests),
           item.url,
           item.body,
           item.updatedAt,

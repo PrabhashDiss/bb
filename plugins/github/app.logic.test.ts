@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildSuggestions,
+  isPrInboxItem,
   matchesQuery,
   parseQuery,
   parseSubPath,
@@ -18,6 +19,7 @@ const issue: Item = {
   author: "alice",
   labels: ["bug", "good first issue"],
   assignees: ["octocat"],
+  reviewRequests: [],
   url: "https://github.com/acme/widgets/issues/7",
   body: "",
   updatedAt: "2026-08-19T12:00:00Z",
@@ -26,6 +28,7 @@ const issue: Item = {
 describe("github panel routes", () => {
   it("round-trips list, create, issue, and pull routes", () => {
     const routes: Route[] = [
+      { view: "inbox" },
       { view: "issues" },
       { view: "pulls" },
       { view: "new" },
@@ -48,7 +51,8 @@ describe("github panel routes", () => {
     expect(parseSubPath("issues/acme/widgets/7/extra")).toEqual({
       view: "issues",
     });
-    expect(parseSubPath("")).toEqual({ view: "issues" });
+    expect(parseSubPath("")).toEqual({ view: "inbox" });
+    expect(parseSubPath("invalid")).toEqual({ view: "inbox" });
   });
 });
 
@@ -83,6 +87,39 @@ describe("github panel query engine", () => {
     ).toBe(true);
     expect(matchesQuery(issue, parseQuery("missing"), "octocat")).toBe(false);
     expect(matchesQuery(issue, parseQuery("state:"), "octocat")).toBe(true);
+  });
+
+  it("includes open pull requests assigned to or awaiting review from the viewer once", () => {
+    const pull = {
+      ...issue,
+      kind: "pr" as const,
+      state: "OPEN",
+      assignees: ["OctoCat"],
+      reviewRequests: ["octocat"],
+    };
+    const reviewRequestOnly = {
+      ...pull,
+      number: 8,
+      assignees: [],
+      reviewRequests: ["OCTOCAT"],
+    };
+    const assignedOnly = {
+      ...pull,
+      number: 9,
+      assignees: ["octocat"],
+      reviewRequests: [],
+    };
+    const unrelated = { ...pull, number: 10, assignees: [], reviewRequests: [] };
+    const closed = { ...pull, number: 11, state: "CLOSED" };
+    const items = [pull, reviewRequestOnly, assignedOnly, unrelated, closed];
+
+    expect(items.filter((item) => isPrInboxItem(item, "octocat"))).toEqual([
+      pull,
+      reviewRequestOnly,
+      assignedOnly,
+    ]);
+    expect(isPrInboxItem(pull, null)).toBe(false);
+    expect(isPrInboxItem(issue, "octocat")).toBe(false);
   });
 
   it("builds bounded qualifier values without losing labels containing spaces", () => {
