@@ -662,16 +662,6 @@
         "plugin-slot: plugins/github/app.tsx: threadPanelAction"
       ]
     },
-    "plugin:inline-vis": {
-      "recipes": [
-        "features/plugin-inline-vis.md"
-      ],
-      "sourceFiles": 5,
-      "sourceDigest": "4f87bce2ac8bcd17910c49316f15cb8e733a8f19e603be4b86866f82b6588c9d",
-      "declarations": [
-        "plugin-slot: plugins/inline-vis/app.tsx: messageDirective"
-      ]
-    },
     "plugin:keep-awake": {
       "recipes": [
         "features/plugin-keep-awake.md"
