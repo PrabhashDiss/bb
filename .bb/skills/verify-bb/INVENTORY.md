@@ -491,12 +491,6 @@ has been exercised or that every behavior has been understood.
 - `plugin-slot: plugins/github/app.tsx: navPanel`
 - `plugin-slot: plugins/github/app.tsx: threadPanelAction`
 
-## plugin:inline-vis
-
-5 source files. Recipes: [plugin-inline-vis](features/plugin-inline-vis.md).
-
-- `plugin-slot: plugins/inline-vis/app.tsx: messageDirective`
-
 ## plugin:keep-awake
 
 7 source files. Recipes: [plugin-keep-awake](features/plugin-keep-awake.md).

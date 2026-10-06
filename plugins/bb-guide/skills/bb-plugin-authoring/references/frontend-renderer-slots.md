@@ -135,7 +135,7 @@ Original }`. `experimental_fullFileContents` is either
 openWorkspaceFile }` — register a leaf
   assistant-message directive. Registration:
   `{ id, component }` where `id` is lowercase kebab-case beginning with a
-  letter (e.g. `inline-vis` matches `::inline-vis{file="demo.html"}`).
+  letter (e.g. `diagram` matches `::diagram{file="demo.html"}`).
   Props: `attributes` is a `Readonly<Record<string, string>>` of untrusted
   parsed key/values (validate your own fields); `source` is the original
   directive text (useful for diagnostics); `message` is
@@ -157,10 +157,8 @@ openWorkspaceFile }` — register a leaf
   `source` (the component ErrorBoundary still isolates a throw). Treat
   attributes as attacker-controlled even though the model emitted them;
   load workspace data through `bb.sdk.files` with root/host confinement
-  rather than trusting paths. Reference implementation:
-  `plugins/inline-vis` (a workspace or thread-storage HTML file shown in a
-  borderless, sandboxed frame that follows the page's height and bb's theme,
-  including relative assets and normal web loading).
+  rather than trusting paths. Assistant HTML fences use core sandboxed
+  rendering and do not need a message directive.
 - `experimental_codeFenceRenderer` → `{ code, language, status, index,
 message, Original }` — render fenced code blocks of chosen languages in
   assistant-message Markdown with a plugin component (e.g. a ` ```ui `
@@ -192,9 +190,7 @@ message, Original }` — render fenced code blocks of chosen languages in
   `code` or `status` changes, so a renderer that fails on a half-streamed
   body recovers on the next chunk. Treat `code` as attacker-controlled even
   though the model emitted it: run generated markup or scripts in a sandboxed
-  frame, never in the bb page. Reference implementation:
-  `plugins/inline-vis` (a ` ```inline-vis ` block holding an HTML page).
-  Experimental: see `docs/api_to_audit.md`.
+  frame, never in the bb page. Experimental: see `docs/api_to_audit.md`.
 - `experimental_messageMetadata` → React metadata beside realized user and assistant
   messages in the main timeline and embedded `ThreadChat`. Registration:
   `{ id, placement?: "above" | "actionRow", component }`; omitted placement
