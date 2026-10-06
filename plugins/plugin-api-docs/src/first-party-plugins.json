@@ -70,11 +70,6 @@
     "icon": "GitPullRequest"
   },
   {
-    "id": "inline-vis",
-    "name": "Inline visualizations",
-    "icon": "AppWindow"
-  },
-  {
     "id": "keep-awake",
     "name": "Keep Awake",
     "icon": "Coffee"
