@@ -95,11 +95,6 @@ export const BUILTIN_PLUGINS = [
     defaultEnabled: false,
   },
   {
-    name: "inline-vis",
-    pluginId: "inline-vis",
-    defaultEnabled: true,
-  },
-  {
     name: "monaco-editor",
     pluginId: "monaco-editor",
     defaultEnabled: false,
