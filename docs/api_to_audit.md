@@ -2649,8 +2649,7 @@ exposes `loadPluginApp(...).codeFenceRenderers`.
 
 **Core callers.** `MarkdownPreview`'s code renderer
 (`markdown-code-fence-renderers.tsx`), the pipeline that also resolves
-`messageDirective`, hosts every claimed fence; the built-in `inline-vis`
-plugin renders through it. BB's `mermaid` diagram stays a core special case
+`messageDirective`, hosts every claimed fence. BB's `mermaid` diagram stays a core special case
 inside `Original`, because it renders on every Markdown surface and this slot
 is scoped to messages.
 
