@@ -1726,8 +1726,8 @@ export interface PluginDiffRendererRegistration {
 
 /**
  * Register a leaf message directive rendered inside assistant (and nested
- * agent) message Markdown. `id` is the directive name: `inline-vis` matches
- * `::inline-vis{file="demo.html"}`.
+ * agent) message Markdown. `id` is the directive name: `diagram` matches
+ * `::diagram{file="demo.html"}`.
  */
 export interface PluginMessageDirectiveRegistration {
   /**
