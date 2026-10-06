@@ -1634,7 +1634,7 @@ refuse plugins whose optional `engines.bb` or `engines.bbPluginSdk` ranges
 do not match the running bb/SDK, or whose `dist/*.meta.json` plugin identity
 does not match the package manifest; installing a non-builtin source whose
 derived id collides with a builtin name (automations, connect,
-custom-instructions, inline-vis, secrets, workflows) is also refused.
+custom-instructions, secrets, workflows) is also refused.
 
 `engines.bbPluginSdk` is a floor, not a ceiling. bb reads the lowest version
 the range allows and runs the plugin on any SDK at or above it within the same
