@@ -949,10 +949,10 @@ For the complete authoring reference — exact signatures, working snippets
 for every surface, the reload lifecycle, testing tips, and gotchas — use
 the built-in `bb-plugin-authoring` skill (agents: it loads on demand;
 humans: plugins/bb-guide/skills/bb-plugin-authoring/
-in a checkout). The builtin `inline-vis` plugin renders
-`::inline-vis{file="demo.html" height="480"}` through the sidebar's
-path-shaped, sandboxed worktree HTML iframe preview; `height` is optional.
-Its card header includes an open-in-sidebar action for the source HTML file.
+in a checkout). Completed assistant `html` and `svg` fences render inline
+with full CSS/JavaScript in opaque-origin iframes, without files or directives.
+They follow BB's theme and fit content up to 1200px. Code, Copy and Expand
+controls remain available. Use `html source` to show code without execution.
 The `plugins/` directory contains every bundled plugin: the auto-installed
 builtins and the store-only BB Official GitHub, Docs, Memory, and Tasks
 plugins. The `examples/plugins/` reference plugins cover slack-bot (webhook
