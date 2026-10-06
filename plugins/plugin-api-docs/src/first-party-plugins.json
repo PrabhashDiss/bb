@@ -55,11 +55,6 @@
     "icon": "Github"
   },
   {
-    "id": "inline-vis",
-    "name": "Inline visualizations",
-    "icon": "AppWindow"
-  },
-  {
     "id": "keep-awake",
     "name": "Keep Awake",
     "icon": "Coffee"

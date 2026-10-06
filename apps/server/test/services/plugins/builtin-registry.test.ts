@@ -27,7 +27,6 @@ const UNPREFIXED_BUNDLED_PLUGIN_IDS = [
   "environment-personal-workspace",
   "environment-project-checkout",
   "github",
-  "inline-vis",
   "keep-awake",
   "memory",
   "monaco-editor",
