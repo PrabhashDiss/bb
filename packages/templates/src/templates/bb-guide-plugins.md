@@ -162,9 +162,9 @@ Each bundled plugin documents its commands and behavior in its own skill.
 - Secrets (builtin): `bb secret request <NAME...> --write-env <path>` collects
   credentials through a secure form into a dotenv file without exposing them
   to the agent; see the `secrets` skill.
-- Inline previews (builtin): shows an HTML page inline in a reply, from a
-  fenced `inline-vis` code block or a `::inline-vis{file="demo.html"}`
-  workspace or thread-storage file; see the `inline-vis` skill.
+- Inline previews (core): completed assistant `html` and `svg` fences render
+  inline with full CSS/JavaScript in opaque-origin iframes, without files or
+  directives. Use `html source` to show code without execution.
 - MCP server (builtin, disabled by default): `bb plugin enable bb--mcp` lets
   ChatGPT, Claude, or another MCP client control this bb; an approved app can
   run any `bb` command. `bb mcp status|clients|revoke`; see the `mcp` skill.

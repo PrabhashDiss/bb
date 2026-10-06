@@ -39,7 +39,7 @@ import type {
   Options as ReactMarkdownOptions,
   UrlTransform,
 } from "react-markdown";
-import { LazyMarkdownHtml } from "./lazy-markdown-html";
+import { LazyMarkdownHtml, LazyMarkdownHtmlRender } from "./lazy-markdown-html";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -143,6 +143,7 @@ import {
 
 interface MarkdownPreviewProps {
   allowHtml?: boolean;
+  renderHtmlFences?: boolean;
   className?: string;
   content: string;
   sourcePrefix?: string;
@@ -456,6 +457,7 @@ const areMarkdownPreviewPropsEqual: MarkdownPreviewPropsEqual = (
   next,
 ) =>
   (previous.allowHtml ?? false) === (next.allowHtml ?? false) &&
+  (previous.renderHtmlFences ?? false) === (next.renderHtmlFences ?? false) &&
   previous.className === next.className &&
   previous.content === next.content &&
   (previous.sourcePrefix ?? "") === (next.sourcePrefix ?? "") &&
@@ -810,12 +812,14 @@ function renderMarkdownLocalFileContextMenuItem(
 }
 
 function MarkdownCodeBlock({
+  canPreview,
   codeProps,
   codeText,
   imagePolicy,
   language,
   preferredTheme,
 }: {
+  canPreview: boolean;
   codeProps: ComponentPropsWithoutRef<"code">;
   codeText: string;
   imagePolicy: MarkdownImagePolicy;
@@ -823,6 +827,8 @@ function MarkdownCodeBlock({
   preferredTheme: Theme;
 }) {
   const [softWrap, setSoftWrap] = useState(false);
+  const [showCode, setShowCode] = useState(false);
+  const showsPreview = canPreview && !showCode;
   const highlightedHtml = useMemo(
     () =>
       language !== "mermaid"
@@ -844,7 +850,12 @@ function MarkdownCodeBlock({
   }
 
   return (
-    <div className="my-2 overflow-hidden rounded-md border border-border bg-surface-recessed">
+    <div
+      className={cn(
+        "my-2 overflow-hidden",
+        !showsPreview && "rounded-md border border-border bg-surface-recessed",
+      )}
+    >
       <div
         data-clipboard-ignore
         className="flex items-center justify-between pl-3 pr-1.5 pt-1.5"
@@ -853,51 +864,93 @@ function MarkdownCodeBlock({
           {language ?? ""}
         </span>
         <div className="flex items-center gap-0.5">
-          <TooltipProvider delayDuration={300}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-pressed={softWrap}
-                  aria-label={LINE_WRAP_LABEL}
-                  onClick={() => {
-                    setSoftWrap((value) => !value);
-                  }}
-                  className="inline-flex size-5 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:text-foreground aria-pressed:text-foreground"
-                >
-                  <Icon name="TextWrap" className="size-3" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">{LINE_WRAP_LABEL}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {canPreview ? (
+            <button
+              type="button"
+              aria-label={showCode ? "Show preview" : "Show code"}
+              onClick={() => setShowCode((value) => !value)}
+              className="inline-flex h-5 items-center px-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              {showCode ? "Preview" : "Code"}
+            </button>
+          ) : null}
+          {showsPreview ? null : (
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-pressed={softWrap}
+                    aria-label={LINE_WRAP_LABEL}
+                    onClick={() => {
+                      setSoftWrap((value) => !value);
+                    }}
+                    className="inline-flex size-5 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:text-foreground aria-pressed:text-foreground"
+                  >
+                    <Icon name="TextWrap" className="size-3" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{LINE_WRAP_LABEL}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           <CopyButton text={codeText} label="Copy code" />
         </div>
       </div>
-      <pre
-        className={cn(
-          "bb-code-highlight px-3 pb-3 pt-1",
-          softWrap
-            ? "whitespace-pre-wrap [overflow-wrap:anywhere]"
-            : "overflow-x-auto",
-        )}
-      >
-        {highlightedMarkup === null ? (
-          <code className="font-mono text-xs" {...codeProps}>
-            {codeText}
-          </code>
-        ) : (
-          <code
-            className={cn(
-              "font-mono text-xs",
-              language ? `language-${language}` : "",
-            )}
-            dangerouslySetInnerHTML={highlightedMarkup}
-            {...codeProps}
-          />
-        )}
-      </pre>
+      {canPreview ? (
+        <div hidden={showCode}>
+          <LazyMarkdownHtmlRender source={codeText} />
+        </div>
+      ) : null}
+      {showsPreview ? null : (
+        <pre
+          className={cn(
+            "bb-code-highlight px-3 pb-3 pt-1",
+            softWrap
+              ? "whitespace-pre-wrap [overflow-wrap:anywhere]"
+              : "overflow-x-auto",
+          )}
+        >
+          {highlightedMarkup === null ? (
+            <code className="font-mono text-xs" {...codeProps}>
+              {codeText}
+            </code>
+          ) : (
+            <code
+              className={cn(
+                "font-mono text-xs",
+                language ? `language-${language}` : "",
+              )}
+              dangerouslySetInnerHTML={highlightedMarkup}
+              {...codeProps}
+            />
+          )}
+        </pre>
+      )}
     </div>
+  );
+}
+
+const HtmlFenceSourceContext = createContext<string | null>(null);
+function isClosedHtmlFence(node: ExtraProps["node"], source: string | null) {
+  const start = node?.position?.start.offset;
+  const end = node?.position?.end.offset;
+  if (source === null || start === undefined || end === undefined) {
+    return false;
+  }
+  const lines = source.slice(start, end).split("\n");
+  const opening = /^(`{3,}|~{3,})(?:html|svg)[ \t]*\r?$/.exec(
+    lines[0] ?? "",
+  )?.[1];
+  const closing = /^[ \t>]*(`{3,}|~{3,})[ \t]*\r?$/.exec(
+    lines.at(-1) ?? "",
+  )?.[1];
+  return (
+    lines.length > 1 &&
+    opening !== undefined &&
+    closing !== undefined &&
+    opening[0] === closing[0] &&
+    closing.length >= opening.length
   );
 }
 
@@ -907,7 +960,7 @@ function MarkdownCode({
   codeFenceSourceOffset,
   imagePolicy,
   linkRouting,
-  node: _node,
+  node,
   preferredTheme,
   rewriteLocalhostLinks,
   "data-code-fence-offset": codeFenceOffset,
@@ -918,9 +971,15 @@ function MarkdownCode({
     typeof children === "string" ? children.replace(/\n$/, "") : "";
   const language = getMarkdownCodeLanguage({ className: codeClassName });
   const isBlock = isMarkdownCodeBlock({ codeText, language });
+  const htmlFenceSource = useContext(HtmlFenceSourceContext);
+  const canPreview =
+    isClosedHtmlFence(node, htmlFenceSource) &&
+    imagePolicy === "render" &&
+    codeText.length <= 512_000;
   if (isBlock) {
     const original = (
       <MarkdownCodeBlock
+        canPreview={canPreview}
         codeProps={props}
         codeText={codeText}
         imagePolicy={imagePolicy}
@@ -1816,6 +1875,7 @@ function MarkdownFrontmatter({ source }: { source: string }) {
 
 function MarkdownPreviewComponent({
   allowHtml = false,
+  renderHtmlFences = false,
   className,
   content,
   sourcePrefix = "",
@@ -2076,6 +2136,7 @@ function MarkdownPreviewComponent({
             render: messageDirectiveMounts,
           }}
         >
+          <HtmlFenceSourceContext.Provider value={renderHtmlFences && rendersHtml ? body : null}>
           <MarkdownRenderOptionsContext.Provider value={markdownRenderOptions}>
             <ThreadMentionsContext.Provider
               value={threadMentions?.mentions ?? EMPTY_THREAD_MENTIONS}
@@ -2093,6 +2154,7 @@ function MarkdownPreviewComponent({
               </PromptMentionsContext.Provider>
             </ThreadMentionsContext.Provider>
           </MarkdownRenderOptionsContext.Provider>
+          </HtmlFenceSourceContext.Provider>
         </MessageDirectiveMountsContext.Provider>
       </div>
 
