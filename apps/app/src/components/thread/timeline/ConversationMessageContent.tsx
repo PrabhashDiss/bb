@@ -607,6 +607,7 @@ function AssistantConversationMessage({
     <>
       <MarkdownPreview
         allowHtml
+        renderHtmlFences
         className={
           streamingSplit === null
             ? undefined
@@ -623,6 +624,7 @@ function AssistantConversationMessage({
       {streamingSplit === null ? null : (
         <MarkdownPreview
           allowHtml
+          renderHtmlFences
           className={STREAMING_TAIL_MARKDOWN_CLASS_NAME}
           content={liveMarkdown}
           sourcePrefix={streamingSplit.settled}
