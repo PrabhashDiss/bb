@@ -14,7 +14,6 @@
     "plugins/environment-modal-sandbox",
     "plugins/environment-personal-workspace",
     "plugins/github",
-    "plugins/inline-vis",
     "plugins/keep-awake",
     "plugins/memory",
     "plugins/monaco-editor",

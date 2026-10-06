@@ -1,7 +1,7 @@
 # BB verification feature map
 
 This map inventories the features discoverable in this checkout across the
-core app, CLI/SDK, all 28 repository plugins, native clients and hosted services.
+core app, CLI/SDK, all repository plugins, native clients and hosted services.
 Each group page has separate recipes with a drive action, observable success,
 source entry points and prerequisites. Shared behaviors can appear in more than
 one recipe because provider/platform behavior needs separate verification.
@@ -64,7 +64,6 @@ were excluded. See the [audit](../MAINTENANCE.md) and
 | [Custom agent instructions](plugin-custom-instructions.md) | 3 | 2 passed, 1 partial/blocked |
 | [Docs vaults and editing](plugin-docs.md) | 9 | 7 passed, 2 partial/blocked |
 | [GitHub issues and pull requests](plugin-github.md) | 8 | 2 passed, 6 partial/blocked |
-| [Inline HTML visualizations](plugin-inline-vis.md) | 5 | 5 passed |
 | [Keep machines awake](plugin-keep-awake.md) | 4 | 4 passed |
 | [Persistent agent memory](plugin-memory.md) | 6 | 6 passed |
 | [Code editor and file tree](plugin-monaco-editor.md) | 6 | 3 passed, 1 failed, 2 partial/blocked |
