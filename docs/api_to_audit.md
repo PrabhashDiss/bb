@@ -1558,8 +1558,7 @@ shared file-tab controller. `experimental_openFilePreview`'s optional
 the same one-off viewer override the file-link "Open with" menu passes, and an
 unregistered id falls back to BB's preview. A `fileOpener` with
 `extensions: []` is never chosen by extension or listed under "Open with", so
-it shows only files its plugin opens this way; Inline visualizations' expanded
-page is the first caller. `experimental_openFileExternally` opens a target
+it shows only files its plugin opens this way. `experimental_openFileExternally` opens a target
 in the client's preferred external app. The boolean results report host
 acceptance, and malformed targets stay inert.
 `experimental_useCanOpenFileExternally(target)` is a hook that reports
@@ -2814,9 +2813,8 @@ reports; elsewhere it loads at once.
 tab contents the side panel renders, so the header, loading and refresh are
 core's own; core's previews reach `FilePreview` through those components with
 no body override. Open in editor uses `useLiveFileOpenTargets` and the
-`openFileExternally` intent, the path core's file previews use. The first
-plugin caller is the Inline visualizations `page` file opener, which draws the
-themed inline-vis frame as the body.
+`openFileExternally` intent, the path core's file previews use. No plugin in
+this repository calls it yet.
 
 Docs: `frontend-components.md`.
 
@@ -2914,8 +2912,7 @@ exposes `loadPluginApp(...).codeFenceRenderers`.
 
 **Core callers.** `MarkdownPreview`'s code renderer
 (`markdown-code-fence-renderers.tsx`), the pipeline that also resolves
-`messageDirective`, hosts every claimed fence; the built-in `inline-vis`
-plugin renders through it. BB's `mermaid` diagram stays a core special case
+`messageDirective`, hosts every claimed fence. BB's `mermaid` diagram stays a core special case
 inside `Original`, because it renders on every Markdown surface and this slot
 is scoped to messages.
 
