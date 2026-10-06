@@ -129,8 +129,7 @@ routing?, allowProviderChange?, align?, disabled?, className? }`, where `routing
   `ExperimentalFilePreviewFile`) draws the
   Preview body of an HTML, Markdown or CSV file instead of bb's, with `url`
   the absolute raw-file URL for sibling assets. Raw mode and other file types
-  stay bb's. A malformed target renders nothing. Reference: the Inline
-  visualizations `page` file opener (`plugins/inline-vis/app.tsx`).
+  stay bb's. A malformed target renders nothing.
 - `experimental_Diff` — bb's diff viewer. Props:
   `{ patch, path, view?, overflow?, showLineNumbers?, experimental_fullFileContents?,
 className? }` —
