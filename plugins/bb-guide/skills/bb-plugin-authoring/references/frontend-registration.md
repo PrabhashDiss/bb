@@ -123,7 +123,7 @@ export default definePluginApp((app) => {
     icon: "Smartphone",
     onActivate: ({ openPluginDetails }) => openPluginDetails(),
   });
-  app.slots.messageDirective({ id: "inline-vis", component: InlineVis });
+  app.slots.messageDirective({ id: "diagram", component: Diagram });
   app.slots.experimental_codeFenceRenderer({
     id: "ui-blocks",
     languages: ["ui"],
