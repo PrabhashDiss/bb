@@ -132,6 +132,7 @@ function watchThreadStorageRoot(
   args: WatchThreadStorageRootArgs,
 ): () => Promise<void> {
   return watchPathChanges(args.threadStorageRootPath, {
+    ignore: [`!(${args.threadIds.join("|")})/**`],
     onChange: ({ changedPaths }) => {
       const events = collectThreadStorageObservedChanges({
         changedPaths,

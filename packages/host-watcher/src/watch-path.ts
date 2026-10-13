@@ -96,7 +96,9 @@ class PathChangeWatcher {
     });
     this.subscription = new RootSubscription({
       rootPath: this.targetPath,
-      subscribeOptions: { ignore: [...PATH_CHANGE_WATCH_IGNORES] },
+      subscribeOptions: {
+        ignore: [...PATH_CHANGE_WATCH_IGNORES, ...(args.ignore ?? [])],
+      },
       retryDelayMs: args.retryDelayMs,
       maxRetryDelayMs: args.maxRetryDelayMs,
       onEvents: (events) => {
@@ -152,6 +154,7 @@ export function watchPathChanges(
 ): () => Promise<void> {
   const watcher = new PathChangeWatcher({
     path: watchedPath,
+    ignore: args.ignore,
     debounceMs: PATH_CHANGE_WATCH_DEBOUNCE_MS,
     maxRetryDelayMs: PATH_CHANGE_WATCH_MAX_RETRY_DELAY_MS,
     maxWaitMs: PATH_CHANGE_WATCH_MAX_WAIT_MS,
