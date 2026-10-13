@@ -27,6 +27,17 @@ user asked to use that tab. The CLI uses the
 current thread, or `--thread <id>` outside a thread. Each session belongs to
 that thread.
 
+To find a `--tab` id, list native tabs. `bb browser tabs` has no defaults and
+requires `--host`, `--instance`, `--generation`, and `--thread`. It lists only
+tabs owned by that thread in that one desktop window, so `tabs: []` means that
+thread has none there, not that the user has no browser tabs. Take `instanceId`
+and `generation` from `instances`:
+
+```sh
+bb browser instances --host <host-id> --json
+bb browser tabs --host <host-id> --instance <instance-id> --generation <generation> --thread "$BB_THREAD_ID" --json
+```
+
 CLI opening:
 
 ```sh
