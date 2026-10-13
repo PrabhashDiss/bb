@@ -14,6 +14,7 @@ export type PathChangeWatchErrorCallback = (
 ) => void;
 
 export interface PathChangeWatchArgs {
+  ignore?: readonly string[];
   onChange: PathChangeCallback;
   onWatchError: PathChangeWatchErrorCallback;
 }

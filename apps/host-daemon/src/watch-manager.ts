@@ -111,6 +111,7 @@ export class WatchManager {
   private latestAppliedWatchSetGeneration = -1;
   private watchSetMutationTail: Promise<void> = Promise.resolve();
   private stopWatchingThreadStorageRoot: StopWatching = STOP_WATCHING;
+  private watchedThreadStorageThreadIds = "";
 
   constructor(private readonly options: WatchManagerOptions = {}) {
     this.hostWatcher = options.hostWatcher;
@@ -194,7 +195,7 @@ export class WatchManager {
     }
 
     if (this.threadStorageTargets.size > 0) {
-      this.ensureThreadStorageWatcher();
+      await this.ensureThreadStorageWatcher();
       return;
     }
     await this.stopThreadStorageWatcher();
@@ -449,22 +450,24 @@ export class WatchManager {
     await stopWatchingStatus();
   }
 
-  private ensureThreadStorageWatcher(): void {
-    if (
-      !this.hostWatcher ||
-      this.stopWatchingThreadStorageRoot !== STOP_WATCHING
-    ) {
-      return;
-    }
-
+  private async ensureThreadStorageWatcher(): Promise<void> {
     const threadStorageRootPath = this.options.threadStorageRootPath;
-    if (!threadStorageRootPath) {
+    if (!this.hostWatcher || !threadStorageRootPath) {
       return;
     }
 
+    const threadIds = [...this.threadStorageTargets.keys()].sort();
+    const watchedThreadIds = threadIds.join("\n");
+    if (watchedThreadIds === this.watchedThreadStorageThreadIds) {
+      return;
+    }
+
+    const stopPreviousWatch = this.stopWatchingThreadStorageRoot;
+    this.watchedThreadStorageThreadIds = watchedThreadIds;
     this.stopWatchingThreadStorageRoot =
       this.hostWatcher.watchThreadStorageRoot({
         threadStorageRootPath,
+        threadIds,
         resolveThreadTarget: (threadId) =>
           this.threadStorageTargets.get(threadId) ?? null,
         onChange: (event) => {
@@ -481,11 +484,13 @@ export class WatchManager {
           });
         },
       });
+    await stopPreviousWatch();
   }
 
   private async stopThreadStorageWatcher(): Promise<void> {
     const stopWatchingThreadStorageRoot = this.stopWatchingThreadStorageRoot;
     this.stopWatchingThreadStorageRoot = STOP_WATCHING;
+    this.watchedThreadStorageThreadIds = "";
     await stopWatchingThreadStorageRoot();
   }
 }

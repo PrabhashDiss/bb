@@ -840,7 +840,7 @@ describe("WatchManager", () => {
     expect(stopWatchingPathChanges).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps the root thread-storage watcher while another target remains", async () => {
+  it("rewatches the root thread-storage watcher when targets change", async () => {
     const stopWatchingPathChanges = vi.fn(() => undefined);
     const { hostWatcher } = createFakeHostWatcher({
       watchThreadStorageRootImplementation: () => stopWatchingPathChanges,
@@ -875,7 +875,7 @@ describe("WatchManager", () => {
       ],
     });
 
-    expect(stopWatchingPathChanges).not.toHaveBeenCalled();
+    expect(stopWatchingPathChanges).toHaveBeenCalledTimes(1);
 
     await manager.replaceWatchSet({
       generation: 3,
@@ -883,6 +883,6 @@ describe("WatchManager", () => {
       threadStorageTargets: [],
     });
 
-    expect(stopWatchingPathChanges).toHaveBeenCalledTimes(1);
+    expect(stopWatchingPathChanges).toHaveBeenCalledTimes(2);
   });
 });

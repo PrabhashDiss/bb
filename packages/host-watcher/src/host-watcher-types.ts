@@ -73,6 +73,7 @@ export interface WatchWorkspaceArgs {
 
 export interface WatchThreadStorageRootArgs {
   threadStorageRootPath: string;
+  threadIds: readonly string[];
   resolveThreadTarget: (threadId: string) => ThreadStorageWatchTarget | null;
   onChange: (event: ThreadStorageObservedChange) => void;
   onWatchError: (error: ThreadStorageWatchError) => void;
