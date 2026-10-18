@@ -40,7 +40,7 @@ bb tasks preset list
 bb tasks delegate PROD-1 --preset "GPT-5.6 · high"
 ```
 
-When the CLI runs inside a linked bb project, `create` and `list` infer the
+When the CLI runs inside a linked bb project, `list` infers the
 tracker project, so `--project` can be omitted. Task keys are case-insensitive
 at the CLI boundary. You can also delegate from a task's **Delegate** menu,
 choose or create presets under **Manage → Presets**, and type `@` in the bb
