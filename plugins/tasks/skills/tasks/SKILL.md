@@ -24,6 +24,10 @@ For task dispatch and execution presets, read
    requests those threads produced (from environment metadata, with state
    open/draft/merged/closed). Use
    `bb tasks show ABC-12 --json` when the result will drive commands or code.
+   The JSON nests the task record under `task`, so read fields from there:
+   `bb tasks show ABC-12 --json | jq '.task | {key,status}'`. Other top-level
+   keys are `project`, `labels`, `subtasks`, `attachments`, `taskThreads`,
+   `pullRequests`, `pullRequestUnavailableThreadIds`, and `comments`.
 
    For project-wide discovery, `bb tasks list` returns at most 100 rows by
    default. Pass `--limit 1-500`; in JSON, continue with `nextCursor` via the
