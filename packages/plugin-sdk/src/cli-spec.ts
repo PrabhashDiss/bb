@@ -201,6 +201,11 @@ export interface PluginCliCommand {
   passthrough?: boolean;
   /** Hint added when an unexpected bare token is passed. */
   unexpectedPositionalHint?: string;
+  /** Hint added when required options are missing; receives their `--name`s. */
+  missingOptionHint?(
+    missing: readonly string[],
+    ctx: PluginCliContext,
+  ): string | undefined | Promise<string | undefined>;
   run(
     input: ErasedRunInput,
     ctx: PluginCliContext,
@@ -263,6 +268,10 @@ export function cliCommand<
   constraints?: readonly PluginCliConstraint[];
   passthrough?: boolean;
   unexpectedPositionalHint?: string;
+  missingOptionHint?(
+    missing: readonly string[],
+    ctx: PluginCliContext,
+  ): string | undefined | Promise<string | undefined>;
   run(
     input: PluginCliRunInput<TOptions, TPositionals>,
     ctx: PluginCliContext,
@@ -1251,9 +1260,14 @@ export function defineCli(spec: PluginCliSpec): PluginCliRegistration {
             : []),
         ];
         if (missing.length > 0) {
+          const hint =
+            options.missing.length > 0
+              ? await command.missingOptionHint?.(options.missing, ctx)
+              : undefined;
           throw usageFailure(spec, path, command, {
             code: "missing_required",
             message: missing.join("; "),
+            ...(hint === undefined ? {} : { hint }),
           });
         }
         checkConstraints(spec, path, command, parsed);
