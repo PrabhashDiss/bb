@@ -699,7 +699,7 @@ describe("bb tasks CLI", () => {
     await harness.dispose();
   });
 
-  it("defaults create and list to the tracker project linked to CLI project context", async () => {
+  it("defaults list to the tracker project linked to CLI project context and requires --project on create", async () => {
     const { bb, harness } = createFakePluginHost({ pluginId: "tasks" });
     await plugin(bb);
     const context = { projectId: "proj_linked" };
@@ -719,7 +719,14 @@ describe("bb tasks CLI", () => {
     const task = JSON.parse(
       stdout(
         await harness.runCli(
-          ["create", "--title", "Uses project context", "--json"],
+          [
+            "create",
+            "--project",
+            "LINK",
+            "--title",
+            "Uses project context",
+            "--json",
+          ],
           context,
         ),
       ),
@@ -736,15 +743,20 @@ describe("bb tasks CLI", () => {
       expect.objectContaining({ id: task.id, agentsWorking: 0 }),
     ]);
 
-    const missing = await harness.runCli(["create", "--title", "No link"], {
-      projectId: "proj_missing",
+    const missing = await harness.runCli(["create", "--title", "No project"], {
+      projectId: context.projectId,
     });
     expect(missing).toMatchObject({
       exitCode: 1,
       stdout: "",
-      stderr:
-        "no tracker project is linked to BB project proj_missing; pass --project or link one with bb tasks project update\n",
+      stderr: expect.stringContaining(
+        "missing required options: --project (this thread's bb project proj_linked is linked to tracker project LINK; re-run with --project LINK)\n\nUsage:\n  bb tasks create --project <prefix-or-id> --title <value>",
+      ),
     });
+    expect(
+      JSON.parse(stdout(await harness.runCli(["list", "--json"], context)))
+        .tasks,
+    ).toHaveLength(1);
 
     await harness.dispose();
   });
