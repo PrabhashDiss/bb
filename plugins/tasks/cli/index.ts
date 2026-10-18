@@ -301,17 +301,8 @@ async function resolveProject(
 async function defaultProject(
   domain: TasksDomain,
   ctx: PluginCliContext,
-  required: boolean,
 ): Promise<Project | undefined> {
-  if (!ctx.projectId) {
-    if (required) {
-      throw new CliError(
-        "missing --project and no BB project context is available",
-        { code: "missing_required" },
-      );
-    }
-    return undefined;
-  }
+  if (!ctx.projectId) return undefined;
   const matches = (await listProjects(domain)).filter(
     (project) => project.linkedBbProjectId === ctx.projectId,
   );
@@ -334,11 +325,25 @@ async function selectedProject(
   domain: TasksDomain,
   ctx: PluginCliContext,
   address: string | undefined,
-  required: boolean,
 ): Promise<Project | undefined> {
   return address
     ? resolveProject(domain, address)
-    : defaultProject(domain, ctx, required);
+    : defaultProject(domain, ctx);
+}
+
+async function linkedProjectHint(
+  domain: TasksDomain,
+  ctx: PluginCliContext,
+): Promise<string> {
+  const linked = ctx.projectId
+    ? (await listProjects(domain)).filter(
+        (project) => project.linkedBbProjectId === ctx.projectId,
+      )
+    : [];
+  const suggestion = linked.length === 1 ? linked[0] : undefined;
+  return suggestion
+    ? `this thread's bb project ${ctx.projectId} is linked to tracker project ${suggestion.prefix}; re-run with --project ${suggestion.prefix}`
+    : "pass a tracker project prefix or id; run bb tasks project list to see them";
 }
 
 async function requiredProject(
@@ -347,17 +352,9 @@ async function requiredProject(
   address: string | undefined,
 ): Promise<Project> {
   if (address) return resolveProject(domain, address);
-  const linked = ctx.projectId
-    ? (await listProjects(domain)).filter(
-        (project) => project.linkedBbProjectId === ctx.projectId,
-      )
-    : [];
-  const suggestion = linked.length === 1 ? linked[0] : undefined;
   throw new CliError("missing required option --project", {
     code: "missing_required",
-    hint: suggestion
-      ? `this thread's bb project ${ctx.projectId} is linked to tracker project ${suggestion.prefix}; re-run with --project ${suggestion.prefix}`
-      : "pass a tracker project prefix or id; run bb tasks project list to see them",
+    hint: await linkedProjectHint(domain, ctx),
   });
 }
 
@@ -1140,8 +1137,12 @@ export function registerTasksCli(
           summary: "Create a task",
           unexpectedPositionalHint:
             "the task title belongs in --title <title>.",
+          missingOptionHint: (missing, ctx) =>
+            missing.includes("--project")
+              ? linkedProjectHint(domain, ctx)
+              : undefined,
           options: {
-            project: PROJECT_OPTION,
+            project: { ...PROJECT_OPTION, required: true },
             title: {
               type: "string",
               required: true,
@@ -1233,13 +1234,10 @@ export function registerTasksCli(
                   bytes: await readAttachmentSource(bb, clientHostId, path),
                 });
               }
-              const project = await selectedProject(
+              const project = await resolveProject(
                 domain,
-                ctx,
                 input.options.project,
-                true,
               );
-              if (!project) throw new CliError("project is required");
               const labels = await projectLabels(domain, project.id);
               const labelIds = input.options.label.map(
                 (name) => resolveLabel(labels, name).id,
@@ -1386,7 +1384,6 @@ export function registerTasksCli(
                 domain,
                 ctx,
                 input.options.project,
-                false,
               );
               const projects = project ? [project] : await listProjects(domain);
               const labelById = await labelsForTaskList(domain, projects);
