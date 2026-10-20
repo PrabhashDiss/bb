@@ -73,7 +73,7 @@ export interface AccountPoolConfigController {
 
 export const providerSchema = z.enum(["claude", "codex"]);
 export type PoolProvider = z.infer<typeof providerSchema>;
-export const accountKindSchema = z.enum(["oauth", "api-key"]);
+export const accountKindSchema = z.enum(["oauth", "oauth-token", "api-key"]);
 export const modelFamilySchema = z.enum([
   "fable",
   "sonnet",
@@ -161,6 +161,13 @@ export const oauthSecretSchema = z
   })
   .strict();
 
+export const oauthTokenSecretSchema = z
+  .object({
+    kind: z.literal("oauth-token"),
+    accessToken: z.string().min(1),
+  })
+  .strict();
+
 export const apiKeySecretSchema = z
   .object({
     kind: z.literal("api-key"),
@@ -170,6 +177,7 @@ export const apiKeySecretSchema = z
 
 export const accountSecretSchema = z.discriminatedUnion("kind", [
   oauthSecretSchema,
+  oauthTokenSecretSchema,
   apiKeySecretSchema,
 ]);
 
@@ -274,14 +282,16 @@ export const statusReportSchema = statusSchema
 
 export type PoolStatusReport = z.infer<typeof statusReportSchema>;
 
-export const accountAddInputSchema = z
-  .object({
-    provider: z.literal("claude"),
-    apiKey: z.string().min(1),
-    label: z.string().min(1).nullable(),
-    priority: z.number().int(),
-  })
-  .strict();
+const accountAddFields = {
+  provider: z.literal("claude"),
+  label: z.string().min(1).nullable(),
+  priority: z.number().int(),
+};
+
+export const accountAddInputSchema = z.union([
+  z.object({ ...accountAddFields, apiKey: z.string().min(1) }).strict(),
+  z.object({ ...accountAddFields, oauthToken: z.string().min(1) }).strict(),
+]);
 
 export type AccountAddInput = z.infer<typeof accountAddInputSchema>;
 

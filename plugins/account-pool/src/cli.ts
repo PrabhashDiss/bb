@@ -306,7 +306,7 @@ export function registerPoolCli(
       commands: {
         "account add": cliCommand({
           summary:
-            "Sign in to a Claude or Codex account, or add an Anthropic API key",
+            "Sign in to a Claude or Codex account, or add an Anthropic API key or OAuth token",
           description:
             "--login prints the browser or device step and exits; finish it with `bb pool account login-complete` (Claude) or `bb pool account login-poll` (Codex).\nThe pool keeps its own login, separate from this machine's Claude Code or Codex login, so neither signs the other out.",
           unexpectedPositionalHint:
@@ -327,6 +327,13 @@ export function registerPoolCli(
               description:
                 "Anthropic API key, --provider claude only. Unsafe: exposes the key in process arguments, shell history, and agent transcripts",
             },
+            "oauth-token": {
+              type: "string",
+              placeholder: "token",
+              stdin: true,
+              description:
+                "Claude subscription OAuth token from claude setup-token (CLAUDE_CODE_OAUTH_TOKEN), --provider claude only. Unsafe: exposes the token in process arguments, shell history, and agent transcripts",
+            },
             label: {
               type: "string",
               placeholder: "text",
@@ -346,7 +353,12 @@ export function registerPoolCli(
             },
             json: JSON_OPTION,
           },
-          constraints: [{ kind: "exactly-one", options: ["login", "api-key"] }],
+          constraints: [
+            {
+              kind: "exactly-one",
+              options: ["login", "api-key", "oauth-token"],
+            },
+          ],
           run: (input) =>
             attempt(async () => {
               const provider = input.options.provider;
@@ -363,13 +375,15 @@ export function registerPoolCli(
               }
               if (provider !== "claude") {
                 throw new PluginCliError(
-                  "Anthropic API keys require --provider claude.",
+                  "Anthropic API keys and OAuth tokens require --provider claude.",
                   { code: "invalid_value" },
                 );
               }
               const parsed = accountAddInputSchema.parse({
                 provider,
-                apiKey: input.options["api-key"],
+                ...(input.options["oauth-token"] !== undefined
+                  ? { oauthToken: input.options["oauth-token"] }
+                  : { apiKey: input.options["api-key"] }),
                 label: input.options.label ?? null,
                 priority: input.options.priority,
               });

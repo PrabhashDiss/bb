@@ -85,7 +85,7 @@ import {
 type DialogState =
   | { kind: "account" | "priority" | "remove"; accountId: string }
   | { kind: "claude-login" | "codex-login"; target: LoginTarget }
-  | { kind: "api-key" }
+  | { kind: "api-key" | "oauth-token" }
   | null;
 
 const NEW_LOGIN: LoginTarget = { kind: "add", label: null, priority: 100 };
@@ -261,7 +261,11 @@ function statusPresentation(account: AccountSummary): {
 function tier(account: AccountSummary): string {
   return (
     account.subscriptionType ??
-    (account.kind === "api-key" ? "API key" : "OAuth")
+    (account.kind === "api-key"
+      ? "API key"
+      : account.kind === "oauth-token"
+        ? "OAuth token"
+        : "OAuth")
   );
 }
 function secondaryEmail(account: AccountSummary): string | null {
@@ -564,7 +568,7 @@ function AddAccountMenu({
   onChoose,
 }: {
   provider: PoolProvider;
-  onChoose: (choice: "login" | "api-key") => void;
+  onChoose: (choice: "login" | "api-key" | "oauth-token") => void;
 }) {
   return (
     <DropdownMenu>
@@ -594,6 +598,18 @@ function AddAccountMenu({
         {provider === "claude" ? (
           <>
             <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="items-start py-2"
+              onSelect={() => onChoose("oauth-token")}
+            >
+              <Icon name="SecurityCheck" className="mt-0.5" />
+              <span>
+                <span className="block">Add OAuth token…</span>
+                <span className="block text-xs text-muted-foreground">
+                  Subscription token from claude setup-token
+                </span>
+              </span>
+            </DropdownMenuItem>
             <DropdownMenuItem
               className="items-start py-2"
               onSelect={() => onChoose("api-key")}
@@ -902,7 +918,7 @@ function AccountPoolSettings() {
   );
   const [loginDone, setLoginDone] = useState<string | null>(null);
   const [pastedCode, setPastedCode] = useState("");
-  const [apiKey, setApiKey] = useState("");
+  const [credential, setCredential] = useState("");
   const [priority, setPriority] = useState("100");
   const [countdown, setCountdown] = useState(0);
   const mounted = useRef(true);
@@ -1111,13 +1127,13 @@ function AccountPoolSettings() {
   }
   async function chooseAdd(
     provider: PoolProvider,
-    choice: "login" | "api-key",
+    choice: "login" | "api-key" | "oauth-token",
   ): Promise<void> {
     if (choice === "login") {
       await startLogin(provider, NEW_LOGIN);
       return;
     }
-    setDialog({ kind: "api-key" });
+    setDialog({ kind: choice });
   }
   async function accountAction(
     account: AccountSummary,
@@ -1527,9 +1543,13 @@ function AccountPoolSettings() {
             />
           </DialogFrame>
         ) : null}
-        {dialog?.kind === "api-key" ? (
+        {dialog?.kind === "api-key" || dialog?.kind === "oauth-token" ? (
           <DialogFrame
-            title="Add an Anthropic API key"
+            title={
+              dialog.kind === "api-key"
+                ? "Add an Anthropic API key"
+                : "Add a Claude OAuth token"
+            }
             footer={
               <>
                 <span className="flex-1" />
@@ -1538,37 +1558,47 @@ function AccountPoolSettings() {
                 </Button>
                 <Button
                   disabled={
-                    apiKey.trim().length === 0 || pending.has("api-key")
+                    credential.trim().length === 0 || pending.has(dialog.kind)
                   }
                   onClick={() =>
-                    void run("api-key", async () => {
+                    void run(dialog.kind, async () => {
                       await rpc.call("account.add", {
                         provider: "claude",
-                        apiKey: apiKey.trim(),
+                        ...(dialog.kind === "api-key"
+                          ? { apiKey: credential.trim() }
+                          : { oauthToken: credential.trim() }),
                         label: null,
                         priority: 100,
                       });
-                      setApiKey("");
+                      setCredential("");
                       setDialog(null);
                     })
                   }
                 >
-                  Add API key
+                  {dialog.kind === "api-key"
+                    ? "Add API key"
+                    : "Add OAuth token"}
                 </Button>
               </>
             }
           >
             <p className="text-sm text-muted-foreground">
-              Metered fallback stored in the Account Pooler&apos;s protected
-              secret directory.
+              {dialog.kind === "api-key"
+                ? "Metered fallback"
+                : "Subscription token from claude setup-token"}{" "}
+              stored in the Account Pooler&apos;s protected secret directory.
             </p>
             <Input
               type="password"
               autoComplete="off"
-              aria-label="Anthropic API key"
+              aria-label={
+                dialog.kind === "api-key"
+                  ? "Anthropic API key"
+                  : "Claude OAuth token"
+              }
               placeholder="sk-ant-…"
-              value={apiKey}
-              onChange={(event) => setApiKey(event.target.value)}
+              value={credential}
+              onChange={(event) => setCredential(event.target.value)}
             />
           </DialogFrame>
         ) : null}
@@ -1778,7 +1808,9 @@ function AccountDialog({
         <dd>
           {account.kind === "oauth"
             ? `OAuth · ${account.provider === "claude" ? "claude.ai" : "ChatGPT"}`
-            : "API key"}
+            : account.kind === "oauth-token"
+              ? "OAuth token · claude.ai"
+              : "API key"}
         </dd>
         <dt className="text-muted-foreground">Priority</dt>
         <dd>{account.priority}</dd>
