@@ -1390,12 +1390,12 @@ describe("Account Pool plugin", () => {
       error: {
         code: "missing_required",
         message:
-          "missing required options: one of --login, --import, --api-key",
+          "missing required options: one of --login, --import, --api-key, --oauth-token",
         hint: expect.stringContaining("bb pool account add"),
       },
     });
     expect(jsonEnvelope.stderr).toContain(
-      "missing required options: one of --login, --import, --api-key",
+      "missing required options: one of --login, --import, --api-key, --oauth-token",
     );
 
     const bypassWithoutThread = await run(["bypass"], {

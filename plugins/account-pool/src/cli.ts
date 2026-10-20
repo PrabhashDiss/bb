@@ -263,7 +263,7 @@ export function registerPoolCli(
       commands: {
         "account add": cliCommand({
           summary:
-            "Sign in to Claude or Codex, import credentials, or add an Anthropic API key",
+            "Sign in to Claude or Codex, import credentials, or add an Anthropic API key or OAuth token",
           description:
             "--login prints the browser or device step and exits; finish it with `bb pool account login-complete` (Claude) or `bb pool account login-poll` (Codex).\n--import reads the provider's existing login on this bb server host (~/.claude or ~/.codex).",
           unexpectedPositionalHint:
@@ -290,6 +290,13 @@ export function registerPoolCli(
               description:
                 "Anthropic API key, --provider claude only. Unsafe: exposes the key in process arguments, shell history, and agent transcripts",
             },
+            "oauth-token": {
+              type: "string",
+              placeholder: "token",
+              stdin: true,
+              description:
+                "Claude subscription OAuth token from claude setup-token (CLAUDE_CODE_OAUTH_TOKEN), --provider claude only. Unsafe: exposes the token in process arguments, shell history, and agent transcripts",
+            },
             label: {
               type: "string",
               placeholder: "text",
@@ -310,7 +317,10 @@ export function registerPoolCli(
             json: JSON_OPTION,
           },
           constraints: [
-            { kind: "exactly-one", options: ["login", "import", "api-key"] },
+            {
+              kind: "exactly-one",
+              options: ["login", "import", "api-key", "oauth-token"],
+            },
             { kind: "at-most-one", options: ["login", "label"] },
             { kind: "at-most-one", options: ["login", "priority"] },
           ],
@@ -355,7 +365,7 @@ export function registerPoolCli(
               const imported = input.options.import;
               if (!imported && provider !== "claude") {
                 throw new PluginCliError(
-                  "Anthropic API keys require --provider claude.",
+                  "Anthropic API keys and OAuth tokens require --provider claude.",
                   { code: "invalid_value" },
                 );
               }
@@ -363,7 +373,12 @@ export function registerPoolCli(
                 provider,
                 source: imported
                   ? { kind: "import" }
-                  : { kind: "api-key", apiKey: input.options["api-key"] },
+                  : input.options["oauth-token"] !== undefined
+                    ? {
+                        kind: "oauth-token",
+                        accessToken: input.options["oauth-token"],
+                      }
+                    : { kind: "api-key", apiKey: input.options["api-key"] },
                 label: input.options.label ?? null,
                 priority: input.options.priority,
               });
