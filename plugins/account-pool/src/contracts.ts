@@ -73,7 +73,7 @@ export interface AccountPoolConfigController {
 
 export const providerSchema = z.enum(["claude", "codex"]);
 export type PoolProvider = z.infer<typeof providerSchema>;
-export const accountKindSchema = z.enum(["oauth", "api-key"]);
+export const accountKindSchema = z.enum(["oauth", "oauth-token", "api-key"]);
 export const modelFamilySchema = z.enum([
   "fable",
   "sonnet",
@@ -161,6 +161,13 @@ export const oauthSecretSchema = z
   })
   .strict();
 
+export const oauthTokenSecretSchema = z
+  .object({
+    kind: z.literal("oauth-token"),
+    accessToken: z.string().min(1),
+  })
+  .strict();
+
 export const apiKeySecretSchema = z
   .object({
     kind: z.literal("api-key"),
@@ -170,6 +177,7 @@ export const apiKeySecretSchema = z
 
 export const accountSecretSchema = z.discriminatedUnion("kind", [
   oauthSecretSchema,
+  oauthTokenSecretSchema,
   apiKeySecretSchema,
 ]);
 
@@ -279,6 +287,12 @@ export const accountAddInputSchema = z
     provider: providerSchema,
     source: z.discriminatedUnion("kind", [
       z.object({ kind: z.literal("import") }).strict(),
+      z
+        .object({
+          kind: z.literal("oauth-token"),
+          accessToken: z.string().min(1),
+        })
+        .strict(),
       z
         .object({ kind: z.literal("api-key"), apiKey: z.string().min(1) })
         .strict(),
