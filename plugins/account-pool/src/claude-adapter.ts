@@ -95,10 +95,10 @@ export function createClaudeAdapter(options: {
         ALLOWED_REQUEST_HEADERS,
         ALLOWED_REQUEST_HEADER_PREFIXES,
       );
-      if (secret.kind === "oauth") {
-        headers.set("authorization", `Bearer ${secret.accessToken}`);
-      } else {
+      if (secret.kind === "api-key") {
         headers.set("x-api-key", secret.apiKey);
+      } else {
+        headers.set("authorization", `Bearer ${secret.accessToken}`);
       }
       return headers;
     },
