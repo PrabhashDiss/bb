@@ -10,6 +10,7 @@ bb pool account login-poll --session <id>
 bb pool account login <id>
 printf '%s\n' "$ANTHROPIC_API_KEY" | bb pool account add --provider claude --api-key-stdin [--label <text>] [--priority <n>]
 bb pool account add --provider claude --api-key <key> [--label <text>] [--priority <n>]
+printf '%s\n' "$CLAUDE_CODE_OAUTH_TOKEN" | bb pool account add --provider claude --oauth-token-stdin [--label <text>] [--priority <n>]
 bb pool account list [--json]
 bb pool account remove <id>
 bb pool account enable <id>
@@ -75,7 +76,7 @@ Tokens are never printed. `status` prunes tokens for unenrolled machines and
 shows token timestamps plus recently routed threads whose machines need a
 local Claude login before the pool can be disabled safely. Rotation keeps the
 prior token valid for ten minutes. Agents should pipe API keys to
-`--api-key-stdin`;
+`--api-key-stdin` and `claude setup-token` OAuth tokens to `--oauth-token-stdin`;
 `--api-key <key>` is an unsafe compatibility form that exposes the key in
 process arguments, shell history, and agent transcripts. OAuth quota refreshes
 on add, enable, or re-login of an enabled account and every five minutes while
@@ -91,7 +92,7 @@ When the token endpoint rejects an OAuth refresh token (HTTP 400 or 401), the
 pool stores a SHA-256 fingerprint of that token, never sends it again on its
 own, even after a restart, and keeps serving the stored access token. The
 account enters error once that access token expires or upstream rejects it; an
-API key enters error when it is rejected. `bb pool account login <id>` replaces
+API key or `oauth-token` credential enters error when it is rejected. `bb pool account login <id>` replaces
 the login and clears both the error and the stored fingerprint.
 `bb pool account enable` clears the error, but an unchanged rejected refresh
 token puts the account back in error as soon as its access token has expired;
