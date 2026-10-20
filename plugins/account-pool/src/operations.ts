@@ -52,15 +52,17 @@ export class PoolOperations {
   ) {}
 
   async add(input: AccountAddInput): Promise<Account> {
-    if (input.source.kind === "api-key") {
+    if (input.source.kind !== "import") {
       if (input.provider !== "claude") {
         throw new Error("Codex accounts can only be added with --import.");
       }
+      const apiKey = input.source.kind === "api-key";
       const account = await this.accounts.add(
         {
           provider: input.provider,
-          kind: "api-key",
-          label: input.label ?? "Claude API key",
+          kind: input.source.kind,
+          label:
+            input.label ?? (apiKey ? "Claude API key" : "Claude OAuth token"),
           email: null,
           accountUuid: null,
           subscriptionType: null,
@@ -68,7 +70,9 @@ export class PoolOperations {
           enabled: true,
           priority: input.priority,
         },
-        { kind: "api-key", apiKey: input.source.apiKey },
+        input.source.kind === "api-key"
+          ? { kind: "api-key", apiKey: input.source.apiKey }
+          : { kind: "oauth-token", accessToken: input.source.accessToken },
       );
       this.onAccountsChanged();
       await this.onAccountEnabled(account.id);
