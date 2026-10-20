@@ -11,6 +11,7 @@ bb pool account add --provider claude --import
 bb pool account add --provider codex --import
 printf '%s\n' "$ANTHROPIC_API_KEY" | bb pool account add --provider claude --api-key-stdin [--label <text>] [--priority <n>]
 bb pool account add --provider claude --api-key <key> [--label <text>] [--priority <n>]
+printf '%s\n' "$CLAUDE_CODE_OAUTH_TOKEN" | bb pool account add --provider claude --oauth-token-stdin [--label <text>] [--priority <n>]
 bb pool account list [--json]
 bb pool account remove <id>
 bb pool account enable <id>
@@ -55,7 +56,7 @@ Tokens are never printed. `status` prunes tokens for unenrolled machines and
 shows token timestamps plus recently routed threads whose machines need a
 local Claude login before the pool can be disabled safely. Rotation keeps the
 prior token valid for ten minutes. Agents should pipe API keys to
-`--api-key-stdin`;
+`--api-key-stdin` and `claude setup-token` OAuth tokens to `--oauth-token-stdin`;
 `--api-key <key>` is an unsafe compatibility form that exposes the key in
 process arguments, shell history, and agent transcripts. Prefer `--import` for
 an existing Claude Code login. The CLI Codex import path reads
@@ -69,9 +70,22 @@ For an OAuth account in error, `refresh` also forces a new token with the stored
 refresh token and clears the error when that succeeds, so a spurious error does
 not require logging in again.
 An account enters error only when its OAuth refresh token is rejected (HTTP 400
-or 401 from the token endpoint) or an API key is rejected. A 401 or 403 on a
+or 401 from the token endpoint) or an API key or `oauth-token` credential is rejected. A 401 or 403 on a
 freshly refreshed OAuth token is treated as an upstream failure instead: the
 request gets HTTP 503, and that token is held out of routing for one minute.
+
+If native Claude usage is fresh but Account Pooler shows stale usage or a refresh
+error, compare credential sources before recommending login. Imports are one-time
+snapshots, not synchronized logins. Host usage reads the current access token from
+`~/.claude/.credentials.json` (Keychain first on macOS), while pool OAuth refresh
+uses its separately stored refresh grant. Fresh native usage does not prove that
+the pool's refresh grant is valid. Compare paths and file modification times,
+without reading credential contents, against the pool account's error and last
+observation. Pool secrets live under the bb server data directory at
+`plugins/account-pool/secrets/accounts/account-<id>.json`. When appropriate, prefer
+reimporting the working native login and verifying matching account identity and
+fresh pooled quota before replacing the stale entry, rather than requiring login.
+
 Account tables add columns for observed model-family buckets; JSON status
 exposes their utilization, reset, status, observation time, and source under
 `familyWeekly`. Selection skips an account whose requested family is spent
