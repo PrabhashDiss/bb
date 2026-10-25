@@ -240,10 +240,15 @@ describe("bb-official marketplace generator", () => {
       },
     });
 
-    expect(dates.get("sample")).toEqual({
-      publishedAt: "2026-01-02T03:04:05Z",
-      updatedAt: "2026-02-03T04:05:06Z",
-    });
+    const sampleDates = dates.get("sample");
+    if (sampleDates === undefined)
+      throw new Error("Sample plugin dates are missing");
+    expect(new Date(sampleDates.publishedAt).toISOString()).toBe(
+      "2026-01-02T03:04:05.000Z",
+    );
+    expect(new Date(sampleDates.updatedAt).toISOString()).toBe(
+      "2026-02-03T04:05:06.000Z",
+    );
   });
 
   it("omits dates and prints one warning in a shallow repository", async () => {

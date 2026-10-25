@@ -343,6 +343,7 @@ exec '${process.execPath}' "$@"
       );
       writeExecutable(join(fixture.binDir, "id"), `#!/bin/sh\necho ${uid}\n`);
       writeCurlArtifactMock(fixture, 404);
+      writeExecutable(join(fixture.binDir, "npm"), "#!/bin/sh\nexit 1\n");
       const result = runScript(BOOTSTRAP_ARGS, fixture, {
         HOME: unset ? undefined : fixture.homeDir,
       });
