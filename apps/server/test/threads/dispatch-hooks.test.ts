@@ -53,8 +53,8 @@ import { withTestHarness, type TestAppHarness } from "../helpers/test-app.js";
 const WORKSPACE_PATH = "/tmp/dispatch-hooks-project";
 
 type HookRegistry = {
-  [K in PluginHookName]: PluginHookRegistration<K>[];
-};
+  [K in PluginHookName]?: PluginHookRegistration<K>[];
+} & { "message.dispatch": PluginHookRegistration<"message.dispatch">[] };
 
 function emptyRegistry(): HookRegistry {
   return { "message.dispatch": [] };
@@ -64,8 +64,12 @@ function installHooks(
   registry: HookRegistry,
   options: { decisionTimeoutMs?: number } = {},
 ): void {
+  const hooks: { [K in PluginHookName]: PluginHookRegistration<K>[] } = {
+    "experimental_thread.metadataSeed": [],
+    ...registry,
+  };
   setPluginHookProvider({
-    listHooks: (hook) => registry[hook],
+    listHooks: (hook) => hooks[hook],
     invokeHook: (_pluginId, _label, run) => invokePluginInline(run),
     decisionTimeoutMs: options.decisionTimeoutMs ?? 10_000,
   });
