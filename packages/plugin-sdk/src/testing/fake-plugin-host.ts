@@ -1250,6 +1250,7 @@ function createFakePluginHostInternal(
     [K in PluginHookName]: PluginHookHandler<K> | null;
   } = {
     "message.dispatch": null,
+    "experimental_thread.metadataSeed": null,
   };
   const environmentCompositions = new Map<
     string,

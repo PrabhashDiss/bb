@@ -974,6 +974,7 @@ export const SURFACE_GROUPS: SurfaceGroup[] = [
           "background",
           "wire",
           "thread-events",
+          "thread-metadata-seed",
           "dispatch-hook",
           "environment-providers",
           "machine-providers",
@@ -1238,6 +1239,22 @@ export const SURFACE_GROUPS: SurfaceGroup[] = [
           "Tasks",
           "Workflows",
         ],
+      },
+      {
+        id: "thread-metadata-seed",
+        tagline: "Validate metadata before a thread exists",
+        title: "Thread metadata seeds",
+        summary:
+          "Add a check that runs before core creates a thread. With this, a plugin can:",
+        bullets: [
+          "Accept a caller's metadata seed and return the canonical version to store",
+          "Reject a seed with a message, before any thread exists",
+          "Receive seeds from the CLI or from threads.spawn, with caller origin unchanged",
+          "Treat seeds as user-writable input, never as proof of identity",
+        ],
+        apiSymbols: ["PluginHooks", "PluginHookSignatures"],
+        firstParty: [],
+        experimental: true,
       },
       {
         id: "dispatch-hook",

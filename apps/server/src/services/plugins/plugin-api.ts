@@ -638,6 +638,7 @@ export function createPluginApi(options: {
   };
   const hooks: PluginHookRecords = {
     "message.dispatch": null,
+    "experimental_thread.metadataSeed": null,
   };
   const environmentCompositions = new Map<
     string,
