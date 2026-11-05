@@ -65,6 +65,7 @@ function installDispatchHook(
 ): void {
   const registry: HookRegistry = {
     "message.dispatch": [{ pluginId: "dispatcher-paths-test", handler }],
+    "experimental_thread.metadataSeed": [],
   };
   setPluginHookProvider({
     listHooks: (hook) => registry[hook],
