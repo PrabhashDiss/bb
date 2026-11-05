@@ -14,6 +14,23 @@ question.
 [provider-bridge-protocol.md](provider-bridge-protocol.md). An entry without
 a "Docs:" line has no owning doc, so it keeps the essential contract itself.
 
+## Thread metadata seed validation (`experimental_thread.metadataSeed`)
+
+`bb.experimental_hooks.on("experimental_thread.metadataSeed", handler)` receives `{metadata}`
+for an explicit `CreateThreadRequest.pluginMetadataSeed`. Return
+`{action: "accept", metadata}` with canonical plugin metadata, or
+`{action: "reject", message}`. Core invokes only the named running plugin before
+creating a thread. Missing handlers, exceptions, timeouts and invalid decisions
+reject creation. Accepted metadata is stored atomically with the thread and is
+available to the first `agents.configure` call. The seed never changes origin or
+execution settings. Metadata is user-writable data, not authentication.
+
+Docs: Plugin Guide (`plugins/plugin-api-docs/src/surfaces.ts`). Core callers are
+`createThreadFromRequest`, SDK `threads.spawn` and CLI `thread spawn`. Before
+stabilization, verify rejection before persistence, canonical metadata limits,
+first-dispatch configuration and plugin reload behavior. Agent Roles uses this
+hook to snapshot role instructions without taking ownership of thread spawning.
+
 ## Application link approvals (`@get-bb/plugin-sdk/app`)
 
 `experimental_getApplicationLinkApprovals()` lists approved URL schemes on the

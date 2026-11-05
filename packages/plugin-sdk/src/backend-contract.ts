@@ -1,5 +1,6 @@
 import type {
   EnvironmentRemoval,
+  JsonObject,
   Environment,
   Host,
   PermissionMode,
@@ -714,7 +715,8 @@ export interface MessageDispatchHookContext {
  * derive from this map — and so does the server's hook registry — so a
  * half-added hook does not compile.
  *
- * One hook today: `message.dispatch`, THE admission checkpoint, run identically
+ * `experimental_thread.metadataSeed` validates explicit seeds before creation.
+ * `message.dispatch` is the admission checkpoint, run identically
  * for a thread's first message, a follow-up, a steer, a retry, and every
  * re-attempt a drain makes. It replaced the earlier `thread.create` +
  * `turn.submit` pair, whose split was an accident of where the code happened to
@@ -722,6 +724,13 @@ export interface MessageDispatchHookContext {
  * `attempt` kind carries what actually differs.
  */
 export interface PluginHookSignatures {
+  /** Validates and canonicalizes this plugin's explicit metadata seed before thread creation. Missing handlers, errors and invalid results reject creation. Metadata is not authentication or plugin-origin attribution. */
+  "experimental_thread.metadataSeed": {
+    context: { metadata: JsonObject };
+    decision:
+      | { action: "accept"; metadata: JsonObject }
+      | { action: "reject"; message: string };
+  };
   "message.dispatch": {
     context: MessageDispatchHookContext;
     decision: MessageDispatchHookDecision;

@@ -71,6 +71,10 @@ async function installIssueLauncher(
     `
       import { appendFileSync } from "node:fs";
       export default function plugin(bb: any) {
+        bb.experimental_hooks.on("experimental_thread.metadataSeed", ({ metadata }: any) =>
+          metadata.issueKey === "valid"
+            ? { action: "accept", metadata: { issueKey: "canonical", enableIssueTool: true } }
+            : { action: "reject", message: "Unknown issue" });
         bb.agents.registerTool({
           name: "issue_lookup",
           description: "Look up the launch issue.",
@@ -292,6 +296,73 @@ describe("thread plugin metadata in agent configuration", () => {
         );
         expectPrivateCommand(queued.command, issueKey);
       }
+    });
+  });
+
+  it("validates a CLI seed before creation and configures its first dispatch from canonical metadata", async () => {
+    await withIssueLauncher(async ({ server, readObservations }) => {
+      const { host } = seedHostSession(server.deps);
+      const workspacePath = "/tmp/plugin-metadata-seed-project";
+      const { project } = seedProjectWithSource(server.deps, {
+        hostId: host.id,
+        path: workspacePath,
+      });
+      seedEnvironment(server.deps, {
+        hostId: host.id,
+        projectId: project.id,
+        path: workspacePath,
+      });
+      const request = {
+        origin: "cli" as const,
+        projectId: project.id,
+        providerId: "codex",
+        model: "gpt-5",
+        environment: {
+          type: "host" as const,
+          hostId: host.id,
+          workspace: { type: "unmanaged" as const, path: workspacePath },
+        },
+        input: textInput("hello"),
+        startedOnBehalfOf: null,
+      };
+      const count = () =>
+        server.db.$client.prepare("SELECT count(*) AS n FROM threads").get();
+      const before = count();
+      await expect(
+        createThreadFromRequest(server.deps, {
+          ...request,
+          pluginMetadataSeed: {
+            pluginId: "issue-launcher",
+            metadata: { issueKey: "unknown" },
+          },
+        }),
+      ).rejects.toThrow("Unknown issue");
+      await expect(
+        createThreadFromRequest(server.deps, {
+          ...request,
+          pluginMetadataSeed: { pluginId: "not-installed", metadata: {} },
+        }),
+      ).rejects.toThrow("no running seed validator");
+      expect(count()).toEqual(before);
+      const spawned = await createThreadFromRequest(server.deps, {
+        ...request,
+        pluginMetadataSeed: {
+          pluginId: "issue-launcher",
+          metadata: { issueKey: "valid", enableIssueTool: false },
+        },
+      });
+      expect(spawned.originPluginId).toBeNull();
+      const queued = await waitForQueuedCommand(
+        server,
+        ({ command }) =>
+          command.type === "thread.start" && command.threadId === spawned.id,
+      );
+      expectPrivateCommand(queued.command, "canonical");
+      expect(await readObservations()).toContainEqual({
+        threadId: spawned.id,
+        pluginMetadata: { issueKey: "canonical", enableIssueTool: true },
+        frozen: true,
+      });
     });
   });
 
