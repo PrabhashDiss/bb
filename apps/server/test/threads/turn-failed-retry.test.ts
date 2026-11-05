@@ -48,8 +48,8 @@ const WORKSPACE_PATH = "/tmp/turn-failed-project";
 type MessageDispatchRegistration = PluginHookRegistration<"message.dispatch">;
 
 type HookRegistry = {
-  [K in PluginHookName]: PluginHookRegistration<K>[];
-};
+  [K in PluginHookName]?: PluginHookRegistration<K>[];
+} & { "message.dispatch": PluginHookRegistration<"message.dispatch">[] };
 
 function installHooks(
   handlers: Partial<{ "message.dispatch": MessageDispatchRegistration[] }>,
@@ -57,8 +57,12 @@ function installHooks(
   const registry: HookRegistry = {
     "message.dispatch": handlers["message.dispatch"] ?? [],
   };
+  const hooks: { [K in PluginHookName]: PluginHookRegistration<K>[] } = {
+    "experimental_thread.metadataSeed": [],
+    ...registry,
+  };
   setPluginHookProvider({
-    listHooks: (hook) => registry[hook],
+    listHooks: (hook) => hooks[hook],
     invokeHook: (_pluginId, _label, run) => invokePluginInline(run),
     decisionTimeoutMs: 10_000,
   });

@@ -61,6 +61,7 @@ function recordDispatchHookCalls(): string[][] {
         },
       },
     ],
+    "experimental_thread.metadataSeed": [],
   };
   setPluginHookProvider({
     listHooks: (hook) => registry[hook],
