@@ -1,3 +1,4 @@
+import { validateThreadMetadataSeed } from "./thread-metadata-seed.js";
 import { requestThreadStorageDeletion } from "./thread-lifecycle.js";
 import { seedThreadSessionOptionSelections } from "./thread-session-options.js";
 import { assertEnvironmentPathAvailable } from "../environments/path-admission.js";
@@ -591,7 +592,20 @@ export async function createThreadFromRequest(
       'originPluginId requires origin "plugin"',
     );
   }
-  const pluginMetadata = resolveCreateThreadPluginMetadata(rawRequestInput);
+  if (
+    rawRequestInput.pluginMetadataSeed !== undefined &&
+    rawRequestInput.pluginMetadata !== undefined
+  ) {
+    throw new ApiError(
+      400,
+      "invalid_request",
+      "Cannot combine pluginMetadataSeed with pluginMetadata",
+    );
+  }
+  const pluginMetadata =
+    rawRequestInput.pluginMetadataSeed === undefined
+      ? resolveCreateThreadPluginMetadata(rawRequestInput)
+      : await validateThreadMetadataSeed(rawRequestInput.pluginMetadataSeed);
   const requestInput = { ...rawRequestInput };
   requestInput.input = (
     await appendPluginMentionContext({ input: requestInput.input })
@@ -692,6 +706,7 @@ export async function createThreadFromRequest(
     originKind: _requestedOriginKind,
     parentThreadId: _requestedParentThreadId,
     pluginMetadata: _requestedPluginMetadata,
+    pluginMetadataSeed: _requestedPluginMetadataSeed,
     sourceThreadId: _requestedSourceThreadId,
     ...requestRest
   } = requestInput;
