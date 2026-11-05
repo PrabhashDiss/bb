@@ -27,6 +27,95 @@ describe("bb thread spawn command output", () => {
     return vi.spyOn(process.stderr, "write").mockImplementation(() => true);
   }
 
+  it("seeds plugin metadata without changing normal spawn controls or CLI attribution", async () => {
+    const post = vi.fn(async ({ json }: { json: unknown }) => {
+      createThreadRequestSchema.parse(json);
+      return fixtures.makeThread({
+        id: "seeded",
+        projectId: "proj-1",
+        providerId: "codex",
+      });
+    });
+    stubServerApi({ "v1.threads.$post": post });
+    const seed = {
+      pluginId: "agent-roles",
+      metadata: { roleSlug: "reviewer", instructionsOnly: true },
+    };
+    await runCommand(
+      [
+        "thread",
+        "spawn",
+        "--project",
+        "proj-1",
+        "--prompt",
+        "review",
+        "--plugin-metadata-seed",
+        JSON.stringify(seed),
+        "--provider",
+        "codex",
+        "--model",
+        "gpt-5",
+        "--reasoning-level",
+        "high",
+        "--permission-mode",
+        "accept-edits",
+        "--title",
+        "My review",
+        "--environment",
+        "env-explicit",
+        "--parent-thread",
+        "parent",
+        "--parent-notifications",
+        "off",
+        "--pinned",
+        "--json",
+      ],
+      register,
+    );
+    expect(post).toHaveBeenCalledWith({
+      json: expect.objectContaining({
+        origin: "cli",
+        pluginMetadataSeed: seed,
+        providerId: "codex",
+        model: "gpt-5",
+        reasoningLevel: "high",
+        permissionMode: "accept-edits",
+        title: "My review",
+        environment: { type: "reuse", environmentId: "env-explicit" },
+        parentThreadId: "parent",
+        parentNotifications: "off",
+        pinned: true,
+      }),
+    });
+    expect(post.mock.calls[0]?.[0].json).not.toHaveProperty("originPluginId");
+  });
+
+  it.each([
+    "not json",
+    "{}",
+    '{"pluginId":"../bad","metadata":{}}',
+    '{"pluginId":"agent-roles","metadata":[]}',
+  ])("rejects invalid metadata seed %s before sending", async (seed) => {
+    const post = vi.fn();
+    stubServerApi({ "v1.threads.$post": post });
+    await expect(
+      runCommand(
+        [
+          "thread",
+          "spawn",
+          "--project",
+          "proj-1",
+          "--prompt",
+          "hello",
+          "--plugin-metadata-seed",
+          seed,
+        ],
+        register,
+      ),
+    ).rejects.toThrow("process.exit:1");
+    expect(post).not.toHaveBeenCalled();
+  });
+
   it("rejects explicitly empty lifecycle ownership instead of creating an independent thread", async () => {
     const post = vi.fn(async ({ json }: { json: unknown }) => {
       createThreadRequestSchema.parse(json);

@@ -51,12 +51,16 @@ function requestPluginWake(harness: TestAppHarness): void {
 const WORKSPACE_PATH = "/tmp/requested-drain-project";
 
 type HookRegistry = {
-  [K in PluginHookName]: PluginHookRegistration<K>[];
-};
+  [K in PluginHookName]?: PluginHookRegistration<K>[];
+} & { "message.dispatch": PluginHookRegistration<"message.dispatch">[] };
 
 function installHooks(registry: HookRegistry): void {
+  const hooks: { [K in PluginHookName]: PluginHookRegistration<K>[] } = {
+    "experimental_thread.metadataSeed": [],
+    ...registry,
+  };
   setPluginHookProvider({
-    listHooks: (hook) => registry[hook],
+    listHooks: (hook) => hooks[hook],
     invokeHook: async (_pluginId, _label, run) => ({
       ok: true,
       value: await run(),

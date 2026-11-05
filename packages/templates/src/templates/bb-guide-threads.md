@@ -25,6 +25,9 @@ Spawning:
   bb thread spawn --project <id> --prompt "..." [options]
   bb thread spawn --project <id> --prompt-file <path> [options]
 
+    --plugin-metadata-seed <json>  {"pluginId":"...","metadata":{...}}. The named running plugin must
+                                   validate and return canonical metadata before any thread is created.
+                                   The seed does not change CLI origin or execution options.
     --prompt <prompt>              Initial prompt (one of --prompt or --prompt-file is required)
     --prompt-file <path>           Read the prompt from a file; `-` reads stdin. Use this for
                                    multi-line or Markdown prompts: inside double quotes the shell

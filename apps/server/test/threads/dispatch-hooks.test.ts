@@ -58,8 +58,8 @@ const WORKSPACE_PATH = "/tmp/dispatch-hooks-project";
  * the same shape the real registry uses on the plugin handle.
  */
 type HookRegistry = {
-  [K in PluginHookName]: PluginHookRegistration<K>[];
-};
+  [K in PluginHookName]?: PluginHookRegistration<K>[];
+} & { "message.dispatch": PluginHookRegistration<"message.dispatch">[] };
 
 function emptyRegistry(): HookRegistry {
   return { "message.dispatch": [] };
@@ -74,8 +74,12 @@ function installHooks(
   registry: HookRegistry,
   options: { decisionTimeoutMs?: number } = {},
 ): void {
+  const hooks: { [K in PluginHookName]: PluginHookRegistration<K>[] } = {
+    "experimental_thread.metadataSeed": [],
+    ...registry,
+  };
   setPluginHookProvider({
-    listHooks: (hook) => registry[hook],
+    listHooks: (hook) => hooks[hook],
     // Mirrors the plugin service's failure isolation: a throw is reported, not
     // propagated, and the runner is what turns it into a failed dispatch.
     invokeHook: (_pluginId, _label, run) => invokePluginInline(run),
