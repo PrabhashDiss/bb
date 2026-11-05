@@ -9,7 +9,10 @@ import {
   type JsonValue,
   type GitBranchSelection,
 } from "@bb/domain";
-import type { CreateThreadEnvironmentArgs } from "@bb/server-contract";
+import {
+  threadPluginMetadataSeedSchema,
+  type CreateThreadEnvironmentArgs,
+} from "@bb/server-contract";
 import { action, CliUsageError } from "../../action.js";
 import { createCliBbSdk } from "../../client.js";
 import { missingProjectHint } from "../../context-hints.js";
@@ -81,6 +84,7 @@ interface ThreadSpawnCommandOptions {
   visibility?: string;
   parentNotifications?: string;
   sendAt?: string;
+  pluginMetadataSeed?: string;
 }
 
 export function looksLikePath(value: string): boolean {
@@ -413,6 +417,10 @@ export function registerSpawnCommand(
       "JSON value for an --environment-provider that declares inputs (`bb environment providers --json` shows the schema)",
     )
     .option("--send-at <when>", SEND_AT_HELP)
+    .option(
+      "--plugin-metadata-seed <json>",
+      "Plugin-validated metadata seed: {pluginId, metadata}. Does not change CLI origin or execution options",
+    )
     .option("--origin-kind <kind>", "Thread origin: fork")
     .option("--source-thread <id>", "Source thread for a fork")
     .option(
@@ -438,6 +446,12 @@ export function registerSpawnCommand(
             message: "Missing required option --project <id>.",
           });
         }
+        const pluginMetadataSeed =
+          opts.pluginMetadataSeed === undefined
+            ? undefined
+            : threadPluginMetadataSeedSchema.parse(
+                JSON.parse(opts.pluginMetadataSeed),
+              );
         const environmentValue = resolveSpawnEnvironmentValue(opts.environment);
         if (
           opts.environmentInputs !== undefined &&
@@ -602,6 +616,7 @@ export function registerSpawnCommand(
           thread = await sdk.threads.spawn({
             origin: "cli",
             projectId,
+            ...(pluginMetadataSeed === undefined ? {} : { pluginMetadataSeed }),
             ...(providerId ? { providerId } : {}),
             ...(opts.model ? { model: opts.model } : {}),
             input,

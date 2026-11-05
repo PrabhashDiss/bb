@@ -39,9 +39,7 @@ import {
   updateEnvironmentRequestSchema,
   unmanagedBranchSpecSchema,
 } from "../src/index.js";
-import type {
-  WorkspaceResolutionFailure,
-} from "@bb/host-daemon-contract/workspace";
+import type { WorkspaceResolutionFailure } from "@bb/host-daemon-contract/workspace";
 
 interface OptionalServerFieldGroup {
   fields: readonly string[];
@@ -356,9 +354,10 @@ const OPTIONAL_SERVER_FIELD_GROUPS: readonly OptionalServerFieldGroup[] = [
   },
   {
     reason:
-      'pluginMetadata is accepted only when origin is "plugin"; plugin submission data is present only for experimental composer submissions and queued payloads that preserve them.',
+      'pluginMetadata is accepted only when origin is "plugin". pluginMetadataSeed is an explicit plugin-validated creation seed independent of origin. Plugin submission data is present only for experimental composer submissions and queued payloads that preserve them.',
     fields: [
       "createThreadRequestSchema.pluginMetadata",
+      "createThreadRequestSchema.pluginMetadataSeed",
       "forkThreadRequestSchema.pluginMetadata",
       "createThreadRequestSchema.pluginSubmission",
       "sendMessageRequestSchema.pluginSubmission",
