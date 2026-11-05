@@ -475,8 +475,10 @@ describe.skipIf(!availability.ok)("connect-next across regions", () => {
     await connectBee("m-c");
     await waitFor(
       () =>
-        instance("m-b").gate.directory.locate("bee").kind === "elsewhere" &&
-        instance("m-a").gate.directory.locate("bee").kind === "elsewhere",
+        ["m-a", "m-b"].every((id) => {
+          const spot = instance(id).gate.directory.locate("bee");
+          return spot.kind === "elsewhere" && spot.instance === "m-c";
+        }),
       5_000,
       "the move to be heard",
     );
