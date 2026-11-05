@@ -128,6 +128,13 @@ export type ExistingThreadExecutionInputSources = z.infer<
   typeof existingThreadExecutionInputSourcesSchema
 >;
 
+export const threadPluginMetadataSeedSchema = z
+  .object({
+    pluginId: pluginIdSchema,
+    metadata: pluginMetadataSchema,
+  })
+  .strict();
+
 export const createThreadRequestSchema = z
   .object({
     projectId: z.string().min(1),
@@ -135,6 +142,7 @@ export const createThreadRequestSchema = z
     origin: threadCreateOriginSchema,
     originPluginId: z.string().min(1).optional(),
     pluginMetadata: pluginMetadataSchema.optional(),
+    pluginMetadataSeed: threadPluginMetadataSeedSchema.optional(),
     lifecycleOwnerThreadId: z.string().min(1).optional(),
     visibility: threadVisibilitySchema.optional(),
     title: z.string().min(1).optional(),
@@ -203,6 +211,16 @@ export const createThreadRequestSchema = z
         message:
           "pluginMetadata requires originPluginId to be a valid plugin id",
         path: ["originPluginId"],
+      });
+    }
+    if (
+      value.pluginMetadataSeed !== undefined &&
+      value.pluginMetadata !== undefined
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Cannot combine pluginMetadataSeed with pluginMetadata",
+        path: ["pluginMetadataSeed"],
       });
     }
     if (value.originKind === null && value.input.length === 0) {
