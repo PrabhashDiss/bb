@@ -3,7 +3,10 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import type { ExperimentalVendorPluginRoots } from "@get-bb/plugin-sdk/host";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { resolveClaudeNativeRoots } from "./native-roots.js";
+import {
+  CLAUDE_NATIVE_ROOTS_DECLARATION,
+  resolveClaudeNativeRoots,
+} from "./native-roots.js";
 
 interface Fixture {
   cwd: string;
@@ -65,6 +68,14 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await rm(tempRoot, { recursive: true, force: true });
+});
+
+describe("CLAUDE_NATIVE_ROOTS_DECLARATION", () => {
+  it("declares no skill roots, so only the resolver lists the user skills directory", () => {
+    expect(CLAUDE_NATIVE_ROOTS_DECLARATION).not.toHaveProperty(
+      "experimental_nativeSkillRoots",
+    );
+  });
 });
 
 describe("resolveClaudeNativeRoots", () => {
