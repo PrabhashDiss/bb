@@ -1240,7 +1240,7 @@ describe("thread runtime config", () => {
         },
       );
 
-      expect(runtimeConfig.instructionMode).toBe("append");
+      expect(runtimeConfig.instructionMode).toBe("replace");
       const userSource =
         "The following user instructions come from <dataDir>/AGENTS.md:";
       const workspaceSource =

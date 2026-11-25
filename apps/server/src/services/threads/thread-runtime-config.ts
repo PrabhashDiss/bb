@@ -284,7 +284,7 @@ export async function resolveThreadRuntimeCommandConfig(
     contributedEnv,
     dynamicTools,
     injectedSkillSources,
-    instructionMode: "append",
+    instructionMode: "replace",
     instructions,
     projectId: args.thread.projectId,
     providerId: args.thread.providerId,
